@@ -1,0 +1,13 @@
+﻿@font-face {
+    font-family: 'Dotted';
+    src: url('/fonts/Dotted.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Segui';
+    src: url('/fonts/SEGUIVAR.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}

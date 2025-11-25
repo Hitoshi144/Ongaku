@@ -1,0 +1,69 @@
+﻿@page "/music-library"
+@using Ongaku.Models
+@inject Ongaku.Services.TrackService TrackService
+@inject IDialogService DialogService
+
+<PageTitle>Library</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
+	<div Class="d-flex flex-row justify-space-between pl-2 pr-2">
+		<MudText Typo="Typo.h5" Style="font-family: 'Segui'; font-weight: 600;">Total songs: 0</MudText>
+
+		<MudButton @onclick="OpenDialogAsync" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" Color="Color.Secondary"
+			Style="border-radius: 2rem; height: 2rem;">Upload</MudButton>
+	</div>
+
+	@if ((tracks == null) || (tracks != null && tracks.Count == 0 && loading))
+	{
+		<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center">
+			<MudProgressCircular Color="Color.Primary" Indeterminate />
+		</div>
+	}
+	else if ((tracks == null) || (tracks != null && tracks.Count == 0))
+	{
+		<div style="position: relative; width: 100%; height: 100%;">
+			<MudText Typo="Typo.h3"
+					 Style="position: absolute; top: 25%; left: 25%; transform: translate(-50%, -50%);
+		                    font-family: 'Segui'; text-align: center;">
+				Nothing found
+			</MudText>
+		</div>
+		<MudImage Src="assets/nothing_found.png"
+				  Style="position: absolute; right: 0; bottom: 0;" />
+	}
+	else
+	{
+		<MudText>@tracks</MudText>
+	}
+</MudContainer>
+
+@code {
+    private List<Track>? tracks;
+    private bool loading = true;
+
+    IList<IBrowserFile> files = new List<IBrowserFile>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(2000);
+
+        tracks = await TrackService.GetAllTracksAsync();
+        loading = false;
+    }
+
+    private void UploadFiles(IReadOnlyList<IBrowserFile> files)
+    {
+        foreach (var file in files)
+        {
+            this.files.Add(file);
+        }
+    }
+
+    private Task OpenDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        return DialogService.ShowAsync<Dialogs.FileUploading>("File uploading", options);
+    }
+
+}
