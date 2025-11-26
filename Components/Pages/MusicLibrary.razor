@@ -2,12 +2,13 @@
 @using Ongaku.Models
 @inject Ongaku.Services.TrackService TrackService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Library</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
 	<div Class="d-flex flex-row justify-space-between pl-2 pr-2">
-		<MudText Typo="Typo.h5" Style="font-family: 'Segui'; font-weight: 600;">Total songs: 0</MudText>
+		<MudText Typo="Typo.h5" Style="font-family: 'Segui'; font-weight: 600;">Total songs: @(tracks != null ? tracks.Count.ToString() : "0")</MudText>
 
 		<MudButton @onclick="OpenDialogAsync" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" Color="Color.Secondary"
 			Style="border-radius: 2rem; height: 2rem;">Upload</MudButton>
@@ -29,41 +30,60 @@
 			</MudText>
 		</div>
 		<MudImage Src="assets/nothing_found.png"
-				  Style="position: absolute; right: 0; bottom: 0;" />
+		Style="position: absolute; right: 0; bottom: 0;" />
 	}
-	else
+	else if (tracks != null && tracks.Count > 0)
 	{
-		<MudText>@tracks</MudText>
+		<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
+			@foreach (Track track in tracks)
+			{
+				<MudPaper Class="pa-3 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+				Style="border-radius: 1rem;"
+				Height="4rem"
+				>
+					<div class="d-flex flex-row align-center">
+						<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="rounded-lg"
+						Width="50" ObjectFit="ObjectFit.Cover"
+						/>
+					</div>
+
+					<div class="d-flex flex-row align-center">
+						<MudText>@track.Duration.Minutes:@track.Duration.Seconds</MudText>
+						<MudIconButton Icon="@Icons.Material.Outlined.MoreVert" Color="Color.Primary" />
+					</div>
+				</MudPaper>
+			}
+		</MudStack>
 	}
 </MudContainer>
 
 @code {
-    private List<Track>? tracks;
-    private bool loading = true;
+	private List<Track>? tracks;
+	private bool loading = true;
 
-    IList<IBrowserFile> files = new List<IBrowserFile>();
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Delay(2000);
 
-    protected override async Task OnInitializedAsync()
-    {
-        await Task.Delay(2000);
+		tracks = await TrackService.GetAllTracksAsync();
+		loading = false;
+	}
 
-        tracks = await TrackService.GetAllTracksAsync();
-        loading = false;
-    }
+	private async Task OpenDialogAsync()
+	{
+		var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
 
-    private void UploadFiles(IReadOnlyList<IBrowserFile> files)
-    {
-        foreach (var file in files)
-        {
-            this.files.Add(file);
-        }
-    }
+		var dialog = await DialogService.ShowAsync<Dialogs.FileUploading>("File uploading", options);
+		var result = await dialog.Result;
 
-    private Task OpenDialogAsync()
-    {
-        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+		if (result != null && !result.Canceled && result.Data is true)
+		{
+			Snackbar.Add("Songs uploaded sccessfully!", Severity.Success);
 
-        return DialogService.ShowAsync<Dialogs.FileUploading>("File uploading", options);
-    }
+			tracks = await TrackService.GetAllTracksAsync();
+
+			StateHasChanged();
+		}
+	}
 
 }

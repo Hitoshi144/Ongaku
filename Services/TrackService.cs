@@ -7,10 +7,16 @@ using Ongaku.Models;
 namespace Ongaku.Services {
     public class TrackService {
         private readonly OngakuContext _context;
+        private readonly IWebHostEnvironment _environment;
+        private readonly ArtistService _artistService;
+        private readonly CoverRandomerService _coverRandomerService;
 
-        public TrackService(OngakuContext context)
+        public TrackService(IWebHostEnvironment env, OngakuContext context, ArtistService artistService, CoverRandomerService coverRandomerService)
         {
+            _environment = env;
             _context = context;
+            _artistService = artistService;
+            _coverRandomerService = coverRandomerService;
         }
 
         public async Task<List<Track>> GetAllTracksAsync(
@@ -51,8 +57,74 @@ namespace Ongaku.Services {
             return await _context.Tracks.Where(t => t.ArtistId == artistId).Include(t => t.Artist).ToListAsync();
         }
 
-        public async Task AddTrackAsync(Track track)
+        public async Task AddTrackAsync(string title, Stream stream)
         {
+            var folder = Path.Combine(_environment.WebRootPath, "uploads");
+            Directory.CreateDirectory( folder );
+
+            var safeFileName = Path.GetFileName($"{title}");
+            var filePath = Path.Combine( folder, safeFileName );
+
+            if (File.Exists( filePath ) )
+            {
+                return;
+            }
+
+            await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                stream.Position = 0;
+                await stream.CopyToAsync( fs );
+            }
+
+            var filemetadata = TagLib.File.Create(filePath);
+
+            Artist? existArtist = await _artistService.GetArtistByName(filemetadata.Tag.FirstPerformer);
+
+            if (existArtist == null)
+            {
+                var artistName = filemetadata.Tag.FirstPerformer;
+
+                if (string.IsNullOrEmpty(artistName))
+                {
+                    artistName = "Pear Teto";
+                }
+
+                existArtist = await _artistService.AddArtistAsync(artistName);
+            }
+
+            var duration = filemetadata.Properties.Duration;
+
+            string? coverPath = null;
+            if (filemetadata.Tag.Pictures != null && filemetadata.Tag.Pictures.Length > 0)
+            {
+                var coversFolder = Path.Combine(_environment.WebRootPath, "covers");
+                Directory.CreateDirectory(coversFolder);
+
+                var picture = filemetadata.Tag.Pictures[0];
+                var bytes = picture.Data.Data;
+                var mime = picture.MimeType;
+
+                var coverName = $"{Guid.NewGuid()}.jpg";
+                var absCoverPath = Path.Combine(coversFolder, coverName);
+
+                coverPath = $"covers/{coverName}";
+                await File.WriteAllBytesAsync( absCoverPath, bytes );
+            }
+            else
+            {
+                coverPath = _coverRandomerService.GetRandomCover();
+            }
+
+                var track = new Track
+                {
+                    Title = title,
+                    Artist = existArtist,
+                    ArtistId = existArtist.Id,
+                    FilePath = filePath,
+                    Duration = duration,
+                    CoverPath = coverPath
+                };
+
             _context.Tracks.Add(track);
             await _context.SaveChangesAsync();
         }

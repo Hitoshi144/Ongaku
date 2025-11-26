@@ -14,5 +14,12 @@
     </PackageReference>
     <PackageReference Include="MudBlazor" Version="8.*" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.*" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="wwwroot\covers\" />
+    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 </Project>

@@ -16,6 +16,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContext<OngakuContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<TrackService>();
+builder.Services.AddScoped<ArtistService>();
+builder.Services.AddScoped<CoverRandomerService>();
 
 var app = builder.Build();
 
