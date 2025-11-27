@@ -14,11 +14,10 @@
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
-    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Mini" OpenMiniOnHover Elevation="2" OverlayAutoClose="false" Breakpoint="Breakpoint.None" >
+    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Mini" OpenMiniOnHover Elevation="2" OverlayAutoClose="false" Breakpoint="Breakpoint.XlAndDown" >
         <NavMenu />
-        <MudSpacer />
     </MudDrawer>
-    <MudMainContent Class="pt-16 pa-4" Style="height: calc(100vh - 48px);">
+    <MudMainContent Class="pt-16 pa-4" Style="height: calc(100vh - 48px); max-width: calc(100% - var(--mud-drawer-width-mini-left)); margin-left: var(--mud-drawer-width-mini-left);">
         @Body
     </MudMainContent>
 </MudLayout>

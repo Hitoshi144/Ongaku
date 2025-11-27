@@ -9,9 +9,9 @@
 				Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" />
 			</div>
 
-			<MudInput Style="width: 80%;" @bind-Value="@_title" Variant="Variant.Outlined"/>
+			<MudTextField Style="width: 80%; min-width: 20rem;" Label="Title" @bind-Value="@_title" Variant="Variant.Outlined"/>
 
-			<MudInput Style="width: 80%;" @bind-Value="@_artist!.Name" Variant="Variant.Outlined" />
+			<MudTextField Style="width: 80%; min-width: 20rem;" Label="Artist" @bind-Value="@_artist!.Name" Variant="Variant.Outlined" />
 
 		</MudStack>
 	</DialogContent>

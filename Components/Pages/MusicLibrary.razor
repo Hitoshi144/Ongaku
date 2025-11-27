@@ -41,14 +41,14 @@
 				Style="border-radius: 1rem;"
 				Height="4rem"
 				>
-					<div class="d-flex flex-row align-center gap-3">
+					<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
 						<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="rounded-lg"
 						Width="50" ObjectFit="ObjectFit.Cover"
 						/>
 
-						<div class="d-flex flex-column justify-center align-start">
-							<MudText style="font-size: 1.25rem;">@track.Title</MudText>
-							<MudText style="font-size: 1rem; opacity: 0.7;">@track.Artist.Name</MudText>
+						<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
+							<MudText style="font-size: 1.25rem; text-wrap: nowrap;">@track.Title</MudText>
+							<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap;">@track.Artist.Name</MudText>
 						</div>
 					</div>
 
