@@ -103,7 +103,10 @@
 	{
 		if (tracks == null) return;
 
+		string name = tracks.FirstOrDefault(t => t.Id == id)!.Title;
 		tracks = tracks.Where(t => t.Id != id).ToList();
+
+		Snackbar.Add($"{name} successfuly deleted!", Severity.Success);
 		StateHasChanged();
 	}
 
