@@ -48,8 +48,8 @@
 					</div>
 
 					<div class="d-flex flex-row align-center">
-						<MudText>@track.Duration.Minutes:@track.Duration.Seconds</MudText>
-						<MudIconButton Icon="@Icons.Material.Outlined.MoreVert" Color="Color.Primary" />
+						<MudText>@track.Duration.Minutes:@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+						<Ongaku.Components.Buttons.TrackActionsBtn />
 					</div>
 				</MudPaper>
 			}
@@ -60,18 +60,31 @@
 @code {
 	private List<Track>? tracks;
 	private bool loading = true;
+	private bool firstRender = true;
 
-	protected override async Task OnInitializedAsync()
+	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		await Task.Delay(2000);
+		if (firstRender)
+		{
+			this.firstRender = false;
+			await LoadTracksAsync();
+		}
+	}
+
+	private async Task LoadTracksAsync()
+	{
+		loading = true;
+		StateHasChanged();
 
 		tracks = await TrackService.GetAllTracksAsync();
 		loading = false;
+
+		StateHasChanged();
 	}
 
 	private async Task OpenDialogAsync()
 	{
-		var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+		var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
 		var dialog = await DialogService.ShowAsync<Dialogs.FileUploading>("File uploading", options);
 		var result = await dialog.Result;

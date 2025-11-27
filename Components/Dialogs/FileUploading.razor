@@ -2,6 +2,17 @@
 @inject ISnackbar Snackbar
 @inject Ongaku.Services.TrackService TrackService
 
+<style>
+    .file-upload-input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 10;
+        opacity: 0;
+    }
+</style>
+
 <MudDialog>
 	<TitleContent>File uploading</TitleContent>
 	<DialogContent>
@@ -10,13 +21,15 @@
                            @ref="@_fileUpload"
                            OnFilesChanged="OnInputFileChanged"
                            AppendMultipleFiles
-                           Hidden="@true"
+                           Hidden="@false"
                            InputClass="file-upload-input"
                            tabindex="-1"
+                           MaximumFileCount="100"
                            @ondrop="@ClearDragClass"
                            @ondragenter="@SetDragClass"
                            @ondragleave="@ClearDragClass"
                            @ondragend="@ClearDragClass"
+                           @ondragover:preventDefault="true"
                            Accept=".mp3, .wav, .aac">
                 <ActivatorContent>
                     <MudPaper Height="300px"
@@ -40,11 +53,19 @@
 	<DialogActions>
         <MudToolBar Gutters="@false"
                     Class="relative d-flex justify-end gap-4">
-            <MudButton Color="Color.Primary"
-                       Disabled="@(!_fileNames.Any())"
+            <MudButton Color="Color.Secondary"
+                       Disabled="@(!_fileNames.Any() || _proccessing)"
                        OnClick="@Upload"
                        Variant="Variant.Filled">
-                Upload
+                @if (_proccessing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate />
+                    <MudText Class="ms-2">Proccessing</MudText>
+                }
+                else
+                {
+                    <MudText>Upload</MudText>
+                }
             </MudButton>
             <MudButton Color="Color.Error"
                        Disabled="@(!_fileNames.Any())"
@@ -56,6 +77,7 @@
 	</DialogActions>
 </MudDialog>
 
+
 @code {
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
@@ -66,6 +88,8 @@
     private readonly List<string> _fileNames = new();
     private readonly List<IBrowserFile> _files = new();
     private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+    private static readonly string[] AllowedExtensions = { ".mp3", ".wav", ".aac" };
+    private bool _proccessing = false;
 
     private async Task ClearAsync()
     {
@@ -84,6 +108,14 @@
         var files = e.GetMultipleFiles();
         foreach (var file in files)
         {
+            var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+
+            if (!AllowedExtensions.Contains(ext))
+            {
+                Snackbar.Add($"Extension of file '{file.Name}' not supported!", Severity.Error);
+                continue;
+            }
+
             _fileNames.Add(file.Name);
             _files.Add(file);
         }
@@ -92,6 +124,8 @@
     private async Task Upload()
     {
         try {
+            _proccessing = true;
+
             if (_fileUpload == null || !_files.Any())
             {
                 return;
@@ -99,7 +133,7 @@
 
             foreach (var file in _files)
             {
-                await using var readStream = file.OpenReadStream(200_000_000);
+                await using var readStream = file.OpenReadStream(200_000_000_000);
                 await using var ms = new MemoryStream();
 
                 await readStream.CopyToAsync(ms);
@@ -107,6 +141,8 @@
 
                 await TrackService.AddTrackAsync(file.Name, ms);
             }
+
+            _proccessing = false;
 
             MudDialog!.Close(DialogResult.Ok(true));
         }
@@ -117,7 +153,7 @@
     }
 
     private void SetDragClass()
-        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+        => _dragClass = $"{DefaultDragClass} mud-border-secondary";
 
     private void ClearDragClass()
         => _dragClass = DefaultDragClass;
