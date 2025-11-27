@@ -115,9 +115,17 @@ namespace Ongaku.Services {
                 coverPath = _coverRandomerService.GetRandomCover();
             }
 
+            string dbTitle = "";
+            var titleParts = title.Split('.');
+
+            for (int i = 0; i < titleParts.Length - 1; i++)
+            {
+                dbTitle += titleParts[i];
+            }
+
                 var track = new Track
                 {
-                    Title = title,
+                    Title = dbTitle,
                     Artist = existArtist,
                     ArtistId = existArtist.Id,
                     FilePath = filePath,

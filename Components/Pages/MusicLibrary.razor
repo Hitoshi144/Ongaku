@@ -41,14 +41,19 @@
 				Style="border-radius: 1rem;"
 				Height="4rem"
 				>
-					<div class="d-flex flex-row align-center">
+					<div class="d-flex flex-row align-center gap-3">
 						<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="rounded-lg"
 						Width="50" ObjectFit="ObjectFit.Cover"
 						/>
+
+						<div class="d-flex flex-column justify-center align-start">
+							<MudText style="font-size: 1.25rem;">@track.Title</MudText>
+							<MudText style="font-size: 1rem; opacity: 0.7;">@track.Artist.Name</MudText>
+						</div>
 					</div>
 
 					<div class="d-flex flex-row align-center">
-						<MudText>@track.Duration.Minutes:@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+						<MudText>@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? "0" + track.Duration.Minutes : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
 						<Ongaku.Components.Buttons.TrackActionsBtn TrackId="@track.Id" OnDelete="DeleteTrack" />
 					</div>
 				</MudPaper>
