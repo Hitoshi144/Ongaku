@@ -49,7 +49,7 @@
 
 					<div class="d-flex flex-row align-center">
 						<MudText>@track.Duration.Minutes:@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
-						<Ongaku.Components.Buttons.TrackActionsBtn />
+						<Ongaku.Components.Buttons.TrackActionsBtn TrackId="@track.Id" OnDelete="DeleteTrack" />
 					</div>
 				</MudPaper>
 			}
@@ -97,6 +97,14 @@
 
 			StateHasChanged();
 		}
+	}
+
+	private void DeleteTrack(int id)
+	{
+		if (tracks == null) return;
+
+		tracks = tracks.Where(t => t.Id != id).ToList();
+		StateHasChanged();
 	}
 
 }

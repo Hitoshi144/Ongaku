@@ -1,12 +1,26 @@
-﻿
+﻿@inject Ongaku.Services.TrackService TrackService
+
+
 <MudMenu Icon="@Icons.Material.Outlined.MoreVert">
 	<MudMenuItem Label="Add to playlist" Icon="@Icons.Material.Outlined.PlaylistAdd" />
 	<MudMenuItem Label="Play next" Icon="@Icons.Material.Outlined.QueuePlayNext" />
 	<MudMenuItem Label="Add to queue" Icon="@Icons.Material.Outlined.AddToQueue" />
 	<MudMenuItem Label="Edit" Icon="@Icons.Material.Outlined.Edit" />
-	<MudMenuItem @onclick="() => {}" Label="Delete"  Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" />
+	<MudMenuItem @onclick="OnDeleteClicked" Label="Delete"  Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" />
 </MudMenu>
 
 @code {
+	[Parameter]
+	public int TrackId { get; set; }
+
+	[Parameter]
+	public EventCallback<int> OnDelete { get; set; }
+
+	private void OnDeleteClicked()
+	{
+		TrackService.DeleteTrackAsync(TrackId);
+
+		OnDelete.InvokeAsync(TrackId);
+	}
 
 }

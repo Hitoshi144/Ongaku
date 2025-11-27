@@ -143,5 +143,28 @@ namespace Ongaku.Services {
         {
             return await _context.Tracks.Select(t => t.Duration).DefaultIfEmpty(TimeSpan.Zero).MinAsync();
         }
+
+        public async void DeleteTrackAsync(int id)
+        {
+            try
+            {
+                Track? targetTrack = await _context.Tracks.SingleOrDefaultAsync(t => t.Id == id);
+                if (targetTrack == null) return;
+
+                File.Delete(Path.Combine(_environment.WebRootPath, targetTrack.FilePath));
+
+                if (targetTrack.CoverPath != null && targetTrack.CoverPath.Contains("covers"))
+                {
+                    File.Delete(Path.Combine(_environment.WebRootPath, targetTrack.CoverPath));
+                }
+
+                _context.Tracks.Remove(targetTrack);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
     }
 }
