@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor;
 using Ongaku.Data;
 using Ongaku.Enums;
@@ -133,6 +134,8 @@ namespace Ongaku.Services {
                     CoverPath = coverPath
                 };
 
+            existArtist.Tracks.Add(track);
+
             _context.Tracks.Add(track);
             await _context.SaveChangesAsync();
         }
@@ -161,10 +164,12 @@ namespace Ongaku.Services {
 
                 File.Delete(Path.Combine(_environment.WebRootPath, targetTrack.FilePath));
 
-                if (targetTrack.CoverPath != null && targetTrack.CoverPath.Contains("covers"))
+                if (targetTrack.CoverPath != null && targetTrack.CoverPath.Split('/')[0] == "covers")
                 {
                     File.Delete(Path.Combine(_environment.WebRootPath, targetTrack.CoverPath));
                 }
+
+                targetTrack.Artist.Tracks.Remove(targetTrack);
 
                 _context.Tracks.Remove(targetTrack);
                 await _context.SaveChangesAsync();
@@ -173,6 +178,67 @@ namespace Ongaku.Services {
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public async Task ChangeCoverAsync(IBrowserFile file, Track track)
+        {
+            _context.Attach(track);
+
+            var coversFolder = Path.Combine(_environment.WebRootPath, "covers");
+            Directory.CreateDirectory(coversFolder);
+
+            var coverName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+            var absCoverPath = Path.Combine(coversFolder, coverName);
+
+            using var stream = file.OpenReadStream(long.MaxValue);
+
+            using var fs = new FileStream(absCoverPath, FileMode.Create, FileAccess.Write);
+            await stream.CopyToAsync(fs);
+
+            var coverPath = $"covers/{coverName}";
+
+            var oldCover = track.CoverPath;
+            if (oldCover != null && oldCover.Split('/')[0] == "covers")
+            {
+                File.Delete(Path.Combine(_environment.WebRootPath, oldCover));
+            }
+
+            track.CoverPath = coverPath;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ChangeTitleAsync(string newTitle, Track track)
+        {
+            _context.Attach(track);
+
+            track.Title = newTitle;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ChangeArtistAsync(string newArtist, Track track)
+        {
+            _context.Attach(track);
+
+            Artist? exist = await _artistService.GetArtistByName(newArtist);
+
+            if (exist == null)
+            {
+                Artist created = await _artistService.AddArtistAsync(newArtist);
+
+                track.Artist = created;
+                track.ArtistId = created.Id;
+
+                created.Tracks.Add(track);
+            }
+            else
+            {
+                track.Artist = exist;
+                track.ArtistId = exist.Id;
+
+                exist.Tracks.Add(track);
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

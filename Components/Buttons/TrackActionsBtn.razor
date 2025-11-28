@@ -17,6 +17,9 @@
 	[Parameter]
 	public EventCallback<int> OnDelete { get; set; }
 
+	[Parameter]
+	public EventCallback OnEdit { get; set; }
+
 	private void OnDeleteClicked()
 	{
 		TrackService.DeleteTrackAsync(track.Id);
@@ -33,6 +36,12 @@
 		};
 
 		var dialog = await DialogService.ShowAsync<Dialogs.TrackEditing>("Track editing", parameters, options);
+		var result = await dialog.Result;
+
+		if (result != null && !result.Canceled && result.Data is true)
+		{
+			await OnEdit.InvokeAsync();
+		}
 	}
 
 }

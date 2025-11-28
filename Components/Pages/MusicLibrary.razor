@@ -43,7 +43,7 @@
 				>
 					<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
 						<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="rounded-lg"
-						Width="50" ObjectFit="ObjectFit.Cover"
+						Width="50" Height="50" ObjectFit="ObjectFit.Cover"
 						/>
 
 						<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
@@ -54,7 +54,7 @@
 
 					<div class="d-flex flex-row align-center">
 						<MudText>@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? "0" + track.Duration.Minutes : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
-						<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" />
+						<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
 					</div>
 				</MudPaper>
 			}

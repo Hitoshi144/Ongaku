@@ -7,7 +7,7 @@
         public required string FilePath { get; set; }
         public string? CoverPath { get; set; }
         public TimeSpan Duration { get; set; }
-        public ICollection<PlaylistTrack>? PlaylistTracks { get; set; }
+        public ICollection<PlaylistTrack> PlaylistTracks { get; set; } = [];
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
