@@ -26,5 +26,15 @@ namespace Ongaku.Services {
             await _context.SaveChangesAsync();
             return artist;
         }
+
+        public async Task<List<Artist>> GetAllArtistsByRequest(string req)
+        {
+            return await _context.Artists.Where(t => EF.Functions.ILike(t.Name, $"%{req}%")).ToListAsync();
+        }
+
+        public async Task<List<Artist>> GetAllArtists()
+        {
+            return await _context.Artists.ToListAsync();
+        }
     }
 }

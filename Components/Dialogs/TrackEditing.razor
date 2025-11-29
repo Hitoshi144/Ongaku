@@ -1,5 +1,6 @@
 ﻿@using Ongaku.Models
 @inject Ongaku.Services.TrackService TrackService
+@inject Ongaku.Services.ArtistService ArtistService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -19,7 +20,10 @@
 
 			<MudTextField Style="width: 80%; min-width: 20rem;" Label="Title" @bind-Value="@_title" Variant="Variant.Outlined"/>
 
-			<MudTextField Style="width: 80%; min-width: 20rem;" Label="Artist" @bind-Value="@_artist" Variant="Variant.Outlined" />
+			<MudAutocomplete T="string" Style="width: 80%; min-width: 20rem;" Label="Artist"
+							 @bind-Value="@_artist" Variant="Variant.Outlined" 
+							 SearchFunc="searchArtist" ResetValueOnEmptyText="true"
+							 />
 
 		</MudStack>
 	</DialogContent>
@@ -107,5 +111,27 @@
 	private void CloseDialog()
 	{
 		MudDialog!.Close(DialogResult.Cancel());
+	}
+
+	private async Task<IEnumerable<string>> searchArtist(string req, CancellationToken token)
+	{
+		try
+		{
+			await Task.Delay(300, token);
+
+			if (req.Trim() != "")
+			{
+				return (await ArtistService.GetAllArtistsByRequest(req)).Select(a => a.Name);
+
+			}
+			else
+			{
+				return (await ArtistService.GetAllArtists()).Select(a => a.Name);
+			}
+		}
+		catch (TaskCanceledException)
+		{
+			return Enumerable.Empty<string>();
+		}
 	}
 }
