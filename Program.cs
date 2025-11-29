@@ -20,6 +20,7 @@ builder.Services.AddDbContext<OngakuContext>(options => options.UseNpgsql(builde
 builder.Services.AddScoped<TrackService>();
 builder.Services.AddScoped<ArtistService>();
 builder.Services.AddScoped<CoverRandomerService>();
+builder.Services.AddScoped<AudioService>();
 
 var app = builder.Build();
 

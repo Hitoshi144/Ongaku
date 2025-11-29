@@ -3,6 +3,7 @@
 @inject Ongaku.Services.TrackService TrackService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject Ongaku.Services.AudioService AudioService
 
 <PageTitle>Library</PageTitle>
 
@@ -37,23 +38,28 @@
 		<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
 			@foreach (Track track in tracks)
 			{
-				<MudPaper Class="pa-3 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+				<MudPaper Class="track-item pa-3 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
 				Style="border-radius: 1rem;"
 				Height="4rem"
+				@onclick="() => Play(track)"
 				>
+					<div class="hover-panel d-flex justify-center align-center">
+						<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
+					</div>
+
 					<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
-						<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="rounded-lg"
+						<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
 						Width="50" Height="50" ObjectFit="ObjectFit.Cover"
 						/>
 
 						<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
-							<MudText style="font-size: 1.25rem; text-wrap: nowrap;">@track.Title</MudText>
-							<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap;">@track.Artist.Name</MudText>
+							<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
+							<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
 						</div>
 					</div>
 
 					<div class="d-flex flex-row align-center">
-						<MudText>@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? "0" + track.Duration.Minutes : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+						<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? "0" + track.Duration.Minutes : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
 						<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
 					</div>
 				</MudPaper>
@@ -100,6 +106,12 @@
 
 			StateHasChanged();
 		}
+		else if (result != null && result.Canceled)
+		{
+			tracks = await TrackService.GetAllTracksAsync();
+
+			StateHasChanged();
+		}
 	}
 
 	private void DeleteTrack(int id)
@@ -113,4 +125,9 @@
 		StateHasChanged();
 	}
 
+	private async Task Play(Track track)
+	{
+		Snackbar.Add($"Now Playing: {track.Title}", Severity.Info);
+		await AudioService.PlayAsync(track);
+	}
 }

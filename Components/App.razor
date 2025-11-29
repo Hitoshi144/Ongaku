@@ -11,11 +11,14 @@
     <link rel="icon" type="image/ico" href="favicon.ico" />
     <HeadOutlet @rendermode="InteractiveServer" />
     <link href="css/fonts.css" rel="stylesheet" />
-    <link href="css/InteractiveBorder.css" rel="stylesheet" />
+    <link href="css/interactive-border.css" rel="stylesheet" />
+    <link href="css/hover-play-tip.css" rel="stylesheet" />
+    <link href="css/mini-player.css" rel="stylesheet" />
 </head>
 
 <body>
     <Routes @rendermode="InteractiveServer" />
+    <audio id="global-audio" preload="auto" />
     <script src="_framework/blazor.web.js"></script>
     <script src=@Assets["_content/MudBlazor/MudBlazor.min.js"]></script>
 </body>

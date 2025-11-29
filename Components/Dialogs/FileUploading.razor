@@ -90,6 +90,7 @@
     private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
     private static readonly string[] AllowedExtensions = { ".mp3", ".wav", ".aac" };
     private bool _proccessing = false;
+    private string? _currentProccessing;
 
     private async Task ClearAsync()
     {
@@ -139,6 +140,7 @@
                 await readStream.CopyToAsync(ms);
                 ms.Position = 0;
 
+                _currentProccessing = file.Name;
                 await TrackService.AddTrackAsync(file.Name, ms);
             }
 
@@ -148,7 +150,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Ошибка: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Ошибка {_currentProccessing}: {ex.Message}", Severity.Error);
+            MudDialog!.Close(DialogResult.Cancel());
         }
     }
 

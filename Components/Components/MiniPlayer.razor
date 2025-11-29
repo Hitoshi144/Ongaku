@@ -1,0 +1,61 @@
+﻿@inject Ongaku.Services.AudioService AudioService
+@using Ongaku.Models
+
+@if (_track != null)
+{
+	<div class="mini-player-container">
+		<MudPaper class="mini-player-paper">
+			<div class="d-flex flex-row gap-3">
+				<MudImage Src="@_track.CoverPath"
+				Width="70" Height="70" ObjectFit="ObjectFit.Cover"
+				Style="border-radius: 0.5rem;"
+				/>
+				<div class="d-flex flex-column justify-center">
+					<MudText>
+						@_track.Title
+					</MudText>
+					<MudText Style="opacity: 0.7;">
+						@_track.Artist.Name
+					</MudText>
+				</div>
+			</div>
+
+			<div class="d-flex flex-row gap-2">
+				<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" />
+				<MudFab Color="Color.Secondary" 
+				 @onclick="@(_paused ? AudioService.ResumeAsync : AudioService.PauseAsync)"
+				 StartIcon="@(_paused ? Icons.Material.Outlined.PlayArrow : Icons.Material.Outlined.Pause)" />
+				<MudIconButton Icon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" />
+			</div>
+		</MudPaper>
+	</div>
+}
+
+@code {
+	private Track? _track;
+	private bool _paused;
+
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+
+		Action<Track> handleTrackChanged = HandleTrackChanged;
+		AudioService.OnTrackChanged += handleTrackChanged;
+		_track = AudioService.CurrentTrack;
+
+		Action<bool> handlePauseStateChanged = HandlePauseStateChanged;
+		AudioService.OnPauseStateChanged += handlePauseStateChanged;
+	}
+
+	private void HandleTrackChanged(Track track)
+	{
+		_track = track;
+		InvokeAsync(StateHasChanged);
+	}
+
+	private void HandlePauseStateChanged(bool state)
+	{
+		_paused = state;
+		InvokeAsync(StateHasChanged);
+	}
+}

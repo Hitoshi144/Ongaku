@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject Ongaku.Services.AudioService AudioService
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -21,6 +22,7 @@
         @Body
     </MudMainContent>
 </MudLayout>
+<Ongaku.Components.Components.MiniPlayer />
 
 
 <div id="blazor-error-ui" data-nosnippet>
@@ -30,6 +32,7 @@
 </div>
 
 @code {
+
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
@@ -44,6 +47,12 @@
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await AudioService.InitAsync();
+        StateHasChanged();
     }
 
     private void DrawerToggle()

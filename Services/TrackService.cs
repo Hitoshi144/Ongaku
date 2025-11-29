@@ -65,6 +65,7 @@ namespace Ongaku.Services {
 
             var safeFileName = Path.GetFileName($"{title}");
             var filePath = Path.Combine( folder, safeFileName );
+            var dbFilePath = Path.Combine("uploads", safeFileName);
 
             if (File.Exists( filePath ) )
             {
@@ -129,7 +130,7 @@ namespace Ongaku.Services {
                     Title = dbTitle,
                     Artist = existArtist,
                     ArtistId = existArtist.Id,
-                    FilePath = filePath,
+                    FilePath = dbFilePath,
                     Duration = duration,
                     CoverPath = coverPath
                 };

@@ -1,0 +1,31 @@
+﻿.mini-player-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    justify-self: center;
+    z-index: 5000;
+    margin-bottom: 1rem;
+}
+
+.mini-player-paper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    max-width: 1280px;
+    height: 95%;
+    z-index: 5001;
+    -webkit-box-shadow: 0px 0px 30px 15px rgba(248, 248, 255, 0.5);
+    -moz-box-shadow: 0px 0px 30px 15px rgba(248, 248, 255, 0.5);
+    box-shadow: 0px 0px 30px 15px rgba(248, 248, 255, 0.5);
+    border-radius: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
