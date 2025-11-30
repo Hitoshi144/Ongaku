@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject Ongaku.Services.AudioService AudioService
+@inject Ongaku.Services.ViewportService ViewportService
+@using MudBlazor.Services
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -32,7 +34,6 @@
 </div>
 
 @code {
-
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
@@ -51,8 +52,14 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await AudioService.InitAsync();
-        StateHasChanged();
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (firstRender)
+        {
+            await ViewportService.InitAsync();
+            await AudioService.InitAsync();
+            StateHasChanged();
+        }
     }
 
     private void DrawerToggle()

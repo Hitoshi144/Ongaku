@@ -2,6 +2,12 @@ export function play(src) {
     const audio = document.getElementById("global-audio");
     audio.src = src;
     audio.play();
+
+    return new Promise(resolve => {
+        audio.onloadedmetadata = () => {
+            resolve(audio.duration)
+        }
+    })
 }
 
 export function pause() {

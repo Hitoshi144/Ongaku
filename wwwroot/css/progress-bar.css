@@ -1,0 +1,25 @@
+﻿.progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--progress-bar-width);
+    background-color: white;
+    pointer-events: none;
+    mix-blend-mode: difference;
+    border-radius: 1rem;
+    z-index: 1;
+    opacity: 0.8;
+
+    transition: width 0.1s linear;
+}
+
+.progress-bar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+}

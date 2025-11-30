@@ -21,6 +21,7 @@ builder.Services.AddScoped<TrackService>();
 builder.Services.AddScoped<ArtistService>();
 builder.Services.AddScoped<CoverRandomerService>();
 builder.Services.AddScoped<AudioService>();
+builder.Services.AddScoped<ViewportService>();
 
 var app = builder.Build();
 
