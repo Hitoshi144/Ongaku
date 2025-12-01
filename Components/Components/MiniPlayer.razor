@@ -2,10 +2,11 @@
 @inject Ongaku.Services.ViewportService ViewportService
 @using Ongaku.Models
 @inject ISnackbar Snackbar
+@inject IDialogService Dialog
 
-@if (_track != null)
+@if (_track != null && !_playerOpened)
 {
-	<div class="mini-player-container">
+	<div class="mini-player-container" @onclick="OpenPlayerAsync">
 		<MudPaper class="mini-player-paper">
 			<div class="progress-bar-container">
 				<div class="progress-bar" style="--progress-bar-width: @_progress;" />
@@ -53,6 +54,7 @@
 	private double _time = 0;
 	private double _duration = 0;
 	private string _progress = "0%";
+	private bool _playerOpened = false;
 
 	protected override void OnInitialized()
 	{
@@ -95,7 +97,6 @@
 
 	private void HandleDurationChanged(double duration)
 	{
-		Snackbar.Add(ViewportService.CurrentSize.Width.ToString());
 		_duration = duration;
 		InvokeAsync(StateHasChanged);
 	}
@@ -122,5 +123,22 @@
 			return $"{h}:{m:D2}:{s:D2}";
 
 		return $"{m}:{s:D2}";
+	}
+
+	private async Task OpenPlayerAsync()
+	{
+		DialogOptions options = new() {FullScreen = true, CloseButton  = true };
+
+		_playerOpened = true;
+		StateHasChanged();
+
+		var dialog = await Dialog.ShowAsync<FullScreenPlayer>("Player", options);
+		var result = await dialog.Result;
+
+		if (result != null)
+		{
+			_playerOpened = false;
+			StateHasChanged();
+		}
 	}
 }

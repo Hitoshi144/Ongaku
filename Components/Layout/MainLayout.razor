@@ -15,7 +15,8 @@
         </MudPaper>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+        <MudIconButton Icon="@Icons.Material.Outlined.VolumeUp" @onclick="ToogleVolume" />
+        <Ongaku.Components.Components.VolumeController _open="_volumeOpen" />
     </MudAppBar>
     <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Mini" OpenMiniOnHover Elevation="2" OverlayAutoClose="false" Breakpoint="Breakpoint.XlAndDown" >
         <NavMenu />
@@ -37,6 +38,7 @@
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
+    private bool _volumeOpen = false;
 
     protected override void OnInitialized()
     {
@@ -117,6 +119,11 @@
         true => Icons.Material.Rounded.AutoMode,
         false => Icons.Material.Outlined.DarkMode,
     };
+
+    private void ToogleVolume()
+    {
+        _volumeOpen = !_volumeOpen;
+    }
 }
 
 

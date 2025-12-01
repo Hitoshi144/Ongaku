@@ -1,0 +1,28 @@
+﻿@inject Ongaku.Services.AudioService AudioService
+
+<MudPopover Open="@_open" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight" RelativeWidth="DropdownWidth.Ignore" OverflowBehavior="OverflowBehavior.FlipAlways" Class="mt-6 pa-3" DropShadow="false">
+	<div class="popover-container">
+		<MudSlider T="double" Value="@value" ValueChanged="OnValueChanged" Min="0" Max="100" Step="1" />
+	</div>
+</MudPopover>
+
+@code {
+	[Parameter]
+	public required bool _open { get; set; }
+
+	private double value = 100;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (_open)
+		{
+			value = await AudioService.GetVolumeAsync() * 100;
+		}
+	}
+
+	private async Task OnValueChanged(double newValue)
+	{
+		value = newValue;
+		await AudioService.SetVolumeAsync(value / 100);
+	}
+}

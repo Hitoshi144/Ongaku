@@ -44,3 +44,8 @@ export function isPaused() {
     const audio = document.getElementById("global-audio")
     return audio.paused;
 }
+
+export function getVolume() {
+    const audio = document.getElementById("global-audio")
+    return audio.volume;
+}

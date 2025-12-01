@@ -127,7 +127,6 @@
 
 	private async Task Play(Track track)
 	{
-		Snackbar.Add($"Now Playing: {track.Title}", Severity.Info);
 		await AudioService.PlayAsync(track);
 	}
 }

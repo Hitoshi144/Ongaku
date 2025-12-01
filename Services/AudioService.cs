@@ -130,5 +130,10 @@ namespace Ongaku.Services {
         {
             return await _module!.InvokeAsync<bool>("isPaused");
         }
+
+        public async Task<double> GetVolumeAsync()
+        {
+            return await _module!.InvokeAsync<double>("getVolume");
+        }
     }
 }
