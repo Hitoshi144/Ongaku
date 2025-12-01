@@ -1,0 +1,8 @@
+﻿.volume-mod-toggle {
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.volume-mod-toggle:hover {
+    color: #c59ae3;
+}

@@ -2,7 +2,39 @@
 
 <MudPopover Open="@_open" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight" RelativeWidth="DropdownWidth.Ignore" OverflowBehavior="OverflowBehavior.FlipAlways" Class="mt-6 pa-3" DropShadow="false">
 	<div class="popover-container">
-		<MudSlider T="double" Value="@value" ValueChanged="OnValueChanged" Min="0" Max="100" Step="1" />
+		@if (!GoofyAhhVersion)
+		{
+			<MudSlider T="double" Value="@value" ValueChanged="OnValueChanged" Min="0" Max="100" Step="1" />
+		}
+		else
+		{
+			<div class="d-flex flex-row gap-3 align-center justify-space-between">
+				<div class="d-flex flex-column align-center justify-center">
+					<MudIconButton Icon="@Icons.Material.Outlined.Flag" Disabled="@_started" @onclick="StartClicker" />
+					<MudText>Start!</MudText>
+				</div>
+
+				<div class="d-flex flex-column align-center justify-center" style="width: 100px;">
+					@if (_started)
+					{
+						<MudText Color="Color.Secondary" Typo="Typo.h6">@_timeLeft</MudText>
+					}
+					else
+					{
+						<MudText Typo="Typo.h6">15</MudText>
+					}
+				</div>
+
+				<div class="d-flex flex-column align-center justify-center">
+					<MudImage Width="100" Height="100" Src="@_btnSrc" @onmousedown="TryClick" @onmouseup="ToogleBtnSrc" />
+					<MudText>Volume: @value</MudText>
+				</div>
+			</div>
+		}
+		<div class="d-flex flex-row mt-2">
+			<MudSpacer />
+			<MudText Class="volume-mod-toggle" @onclick="ToogleGoofyAhhVersion">Goofy ahh version @(GoofyAhhVersion ? "ON" : "OFF")</MudText>
+		</div>
 	</div>
 </MudPopover>
 
@@ -11,6 +43,13 @@
 	public required bool _open { get; set; }
 
 	private double value = 100;
+
+	private bool GoofyAhhVersion = false;
+	private string _btnSrc = "assets/sinji_idle.png";
+
+	private bool _started = false;
+	private int _timeLeft = 15;
+	private System.Timers.Timer? _timer;
 
 	protected override async Task OnParametersSetAsync()
 	{
@@ -24,5 +63,72 @@
 	{
 		value = newValue;
 		await AudioService.SetVolumeAsync(value / 100);
+	}
+
+	private void ToogleGoofyAhhVersion()
+	{
+		GoofyAhhVersion = !GoofyAhhVersion;
+	}
+
+	private void ToogleBtnSrc()
+	{
+		if (_btnSrc == "assets/sinji_idle.png")
+		{
+			_btnSrc = "assets/sinji_pressed.png";
+		}
+		else
+		{
+			_btnSrc = "assets/sinji_idle.png";
+		}
+	}
+
+	private void StartClicker()
+	{
+		if (_started) return;
+
+		_started = true;
+		_timeLeft = 15;
+		value = 0;
+
+		_timer?.Dispose();
+		_timer = new System.Timers.Timer(1000);
+		_timer.Elapsed += (_, _) =>
+		{
+			if (_timeLeft > 0)
+			{
+				_timeLeft--;
+				InvokeAsync(StateHasChanged);
+			}
+			else
+			{
+				StopClicker();
+			}
+		};
+
+		_timer.Start();
+	}
+
+	private void StopClicker()
+	{
+		_timer?.Stop();
+		_timer?.Dispose();
+		_timer = null;
+
+		_started = false;
+
+		InvokeAsync(StateHasChanged);
+	}
+
+	private async void TryClick()
+	{
+		if (!_started) return;
+
+		ToogleBtnSrc();
+
+		value = Math.Clamp(value + 1, 0, 100);
+
+		await AudioService.SetVolumeAsync(value / 100);
+
+		await InvokeAsync(StateHasChanged);
 	}
 }
