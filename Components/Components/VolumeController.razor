@@ -72,6 +72,8 @@
 
 	private void ToogleBtnSrc()
 	{
+		if (!_started) return;
+
 		if (_btnSrc == "assets/sinji_idle.png")
 		{
 			_btnSrc = "assets/sinji_pressed.png";
@@ -115,6 +117,8 @@
 		_timer = null;
 
 		_started = false;
+
+		_btnSrc = "assets/sinji_idle.png";
 
 		InvokeAsync(StateHasChanged);
 	}

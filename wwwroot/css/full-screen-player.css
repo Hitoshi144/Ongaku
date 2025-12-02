@@ -1,0 +1,16 @@
+﻿.full-screen-player-container {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000;
+    z-index: 9999;
+    transition: transform 0.5s ease;
+}
+
+.showed {
+    transform: translateY(-95%);
+}
+
+.hidden {
+    transform: translateY(100%);
+}

@@ -4,9 +4,9 @@
 @inject ISnackbar Snackbar
 @inject IDialogService Dialog
 
-@if (_track != null && !_playerOpened)
+@if (_track != null)
 {
-	<div class="mini-player-container" @onclick="OpenPlayerAsync">
+	<div class="mini-player-container" @onclick="TogglePlayerOpened">
 		<MudPaper class="mini-player-paper">
 			<div class="progress-bar-container">
 				<div class="progress-bar" style="--progress-bar-width: @_progress;" />
@@ -38,14 +38,16 @@
 					</div>
 				}
 
-				<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" />
+				<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" @onclick="AudioService.PlayPrevAsync" />
 				<MudFab Color="Color.Secondary"  Style="z-index: 2;" DropShadow="false"
 				 @onclick="@(_paused ? AudioService.ResumeAsync : AudioService.PauseAsync)"
 				 StartIcon="@(_paused ? Icons.Material.Outlined.PlayArrow : Icons.Material.Outlined.Pause)" />
-				<MudIconButton Icon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" />
+				<MudIconButton Icon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" @onclick="AudioService.PlayNextAsync" />
 			</div>
 		</MudPaper>
 	</div>
+
+	<FullScreenPlayer _hidden="!_playerOpened" OnHide="TogglePlayerOpened" />
 }
 
 @code {
@@ -91,7 +93,7 @@
 	private void HandleTimeChanged(double time)
 	{
 		_time = time;
-		_progress = ((Math.Round(_time / _duration * 100, 2)).ToString() + "%").Replace(",", ".");
+		_progress = ((Math.Round(_time / _duration * 100, 10)).ToString() + "%").Replace(",", ".");
 		InvokeAsync(StateHasChanged);
 	}
 
@@ -125,20 +127,9 @@
 		return $"{m}:{s:D2}";
 	}
 
-	private async Task OpenPlayerAsync()
+	private void TogglePlayerOpened()
 	{
-		DialogOptions options = new() {FullScreen = true, CloseButton  = true };
-
-		_playerOpened = true;
-		StateHasChanged();
-
-		var dialog = await Dialog.ShowAsync<FullScreenPlayer>("Player", options);
-		var result = await dialog.Result;
-
-		if (result != null)
-		{
-			_playerOpened = false;
-			StateHasChanged();
-		}
+		_playerOpened = !_playerOpened;
+		InvokeAsync(StateHasChanged);
 	}
 }

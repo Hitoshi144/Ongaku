@@ -127,6 +127,12 @@
 
 	private async Task Play(Track track)
 	{
-		await AudioService.PlayAsync(track);
+		if (tracks == null)
+		{
+			Snackbar.Add("Tracks library is empty!", Severity.Error);
+			return;
+		}
+
+		await AudioService.PlayFromAsync(tracks, track, Enums.QueueSourceEnum.Library);
 	}
 }

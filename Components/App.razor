@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@inject Ongaku.Services.AudioService AudioService
+@inject IJSRuntime JS
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -17,11 +20,30 @@
     <link href="css/progress-bar.css" rel="stylesheet" />
     <link href="css/volume-paper.css" rel="stylesheet" />
     <link href="css/volume-mod-toggle.css" rel="stylesheet" />
+    <link href="css/full-screen-player.css" rel="stylesheet" />
 </head>
 
 <body>
     <Routes @rendermode="InteractiveServer" />
-    <audio id="global-audio" preload="auto" />
+
+    <script>
+        window.AudioInterop = {
+            audioRef: null,
+            setRef: function (ref) {
+                this.audioRef = ref;
+            },
+            handleEnded: function () {
+                if (this.audioRef) {
+                    console.log("playing next..")
+                    this.audioRef.invokeMethodAsync("PlayNext");
+                }
+                else {
+                    console.error("audioRef not found!");
+                }
+            }
+        }
+    </script>
+
     <script src="_framework/blazor.web.js"></script>
     <script src=@Assets["_content/MudBlazor/MudBlazor.min.js"]></script>
 </body>

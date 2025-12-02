@@ -1,0 +1,17 @@
+﻿@inject IJSRuntime JS
+@inject Ongaku.Services.AudioService AudioService
+
+<audio id="global-audio" preload="auto" onended="AudioInterop.handleEnded()" />
+
+@code {
+    private DotNetObjectReference<Ongaku.Services.AudioService>? audioRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            audioRef = DotNetObjectReference.Create(AudioService);
+            await JS.InvokeVoidAsync("AudioInterop.setRef", audioRef);
+        }
+    }
+}

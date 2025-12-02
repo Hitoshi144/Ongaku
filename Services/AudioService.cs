@@ -1,4 +1,5 @@
 ﻿using Microsoft.JSInterop;
+using Ongaku.Enums;
 using Ongaku.Models;
 
 namespace Ongaku.Services {
@@ -8,6 +9,10 @@ namespace Ongaku.Services {
         private Track? _currentTrack;
         private bool _isPaused;
         private double? _duration;
+
+        private List<Track> _queue = new();
+        private int _currentIndex = -1;
+        private QueueSourceEnum _queueSource = QueueSourceEnum.None;
 
         public event Action<Track?>? OnTrackChanged;
         public event Action<bool>? OnPauseStateChanged;
@@ -134,6 +139,72 @@ namespace Ongaku.Services {
         public async Task<double> GetVolumeAsync()
         {
             return await _module!.InvokeAsync<double>("getVolume");
+        }
+
+        public void BuildQueue(IEnumerable<Track> tracks, Track startTrack, QueueSourceEnum source)
+        {
+            _queue = tracks.ToList();
+            _currentIndex = _queue.FindIndex(t => t.Id == startTrack.Id);
+
+            if (_currentIndex < 0 )
+            {
+                throw new Exception("Start track not found in queue!");
+            }
+
+            _queueSource = source;
+        }
+
+        public async Task PlayFromAsync(
+            IEnumerable<Track> sourceTracks,
+            Track track,
+            QueueSourceEnum source
+            )
+        {
+            if (_queueSource == QueueSourceEnum.None || _queueSource != source)
+            {
+                BuildQueue(sourceTracks, track, source);
+            }
+            else
+            {
+                _currentIndex = _queue.FindIndex(t => t.Id == track.Id);
+            }
+
+            await PlayAsync(track);
+        }
+
+        [JSInvokable("PlayNext")]
+        public async Task PlayNextAsync()
+        {
+            if (_queue != null && _queueSource != QueueSourceEnum.None)
+            {
+                if (_currentIndex != _queue.Count - 1)
+                {
+                    _currentIndex++;
+                    await PlayAsync(_queue[_currentIndex]);
+                }
+                else
+                {
+                    _currentIndex = 0;
+                    await PlayAsync(_queue[_currentIndex]);
+                }
+            }
+        }
+
+        public async Task PlayPrevAsync()
+        {
+            if (_queue != null && _queueSource != QueueSourceEnum.None)
+            {
+                if (_currentIndex != 0)
+                {
+                    _currentIndex--;
+                    await PlayAsync(_queue[_currentIndex]);
+                }
+                else
+                {
+                    _currentIndex = _queue.Count - 1;
+                    await PlayAsync(_queue[_currentIndex]);
+                }
+            }
         }
     }
 }

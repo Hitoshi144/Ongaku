@@ -1,11 +1,19 @@
-﻿<MudDialog>
-	<DialogContent>
-		Player
-	</DialogContent>
-</MudDialog>
+﻿<div class="full-screen-player-container @(_hidden ? "hidden" : "showed")">
+	<div class="d-flex flex-row pa-3">
+		<MudSpacer />
+		<MudIconButton Size="Size.Large" @onclick="OnHideClicked" Color="Color.Primary" Icon="@Icons.Material.Outlined.ExpandCircleDown" />
+	</div>
+</div>
 
 @code {
-	[CascadingParameter]
-	private IMudDialogInstance? MudDialog { get; set; }
+	[Parameter]
+	public bool _hidden { get; set; }
 
+	[Parameter]
+	public EventCallback OnHide { get; set; }
+
+	private void OnHideClicked()
+	{
+		OnHide.InvokeAsync();
+	}
 }
