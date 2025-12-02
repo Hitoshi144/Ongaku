@@ -2,6 +2,7 @@
 @inject Ongaku.Services.AudioService AudioService
 @inject Ongaku.Services.ViewportService ViewportService
 @using MudBlazor.Services
+@using MudBlazor
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -49,6 +50,7 @@
         {
             PaletteLight = _lightPalette,
             PaletteDark = _darkPalette,
+            Typography = _typography,
             LayoutProperties = new LayoutProperties()
         };
     }
@@ -113,6 +115,14 @@
         TableLines = "#33323e",
         Divider = "#292838",
         OverlayLight = "#1e1e2d80",
+    };
+
+    private readonly Typography _typography = new()
+    {
+        Default = new DefaultTypography
+        {
+            FontFamily = new[] { "Segui" }
+        }
     };
 
     public string DarkLightModeButtonIcon => _isDarkMode switch

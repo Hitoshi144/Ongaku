@@ -1,0 +1,18 @@
+﻿.order-text {
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.asc-on {
+    opacity: 1;
+    color: #F8F8FF;
+}
+
+.off {
+    color: white;
+    opacity: 0.7;
+}
+
+.desc-on {
+    color: #c59ae3;
+    opacity: 1;
+}

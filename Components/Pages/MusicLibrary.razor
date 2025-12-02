@@ -15,6 +15,7 @@
 			Style="border-radius: 2rem; height: 2rem;">Upload</MudButton>
 	</div>
 
+
 	@if ((tracks == null) || (tracks != null && tracks.Count == 0 && loading))
 	{
 		<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center">
@@ -33,59 +34,131 @@
 		<MudImage Src="assets/nothing_found.png"
 		Style="position: absolute; right: 0; bottom: 0;" />
 	}
-	else if (tracks != null && tracks.Count > 0)
+	else
 	{
-		<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
-			@foreach (Track track in tracks)
-			{
-				<MudPaper Class="track-item pa-3 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
-				Style="border-radius: 1rem;"
-				Height="4rem"
-				@onclick="() => Play(track)"
-				>
-					<div class="hover-panel d-flex justify-center align-center">
-						<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
-					</div>
+		<MudTextField DebounceInterval="300" OnDebounceIntervalElapsed="OnReqChanged" @bind-Value="_searchReq" class="pt-3" Clearable Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" AdornmentColor="Color.Secondary" />
 
-					<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
-						<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
-						Width="50" Height="50" ObjectFit="ObjectFit.Cover"
-						/>
-
-						<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
-							<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
-							<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
+		 if (reqTracks != null && reqTracks.Count > 0)
+		{
+			<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
+				@foreach (Track track in reqTracks)
+				{
+					<MudPaper Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+							  Style="border-radius: 1rem;"
+							  Height="5rem"
+							  @onclick="() => Play(track)">
+						<div class="hover-panel d-flex justify-center align-center">
+							<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
 						</div>
-					</div>
 
-					<div class="d-flex flex-row align-center">
-						<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
-						<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
-					</div>
-				</MudPaper>
-			}
-		</MudStack>
+						<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
+							<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
+									  Width="55" Height="55" ObjectFit="ObjectFit.Cover" />
+
+							<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
+								<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
+								<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
+							</div>
+						</div>
+
+						<div class="d-flex flex-row align-center">
+							<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+							<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
+						</div>
+					</MudPaper>
+				}
+			</MudStack>
+		}
+		else if (tracks != null && tracks.Count > 0)
+		{
+			<div class="d-flex flex-row gap-3 align-center">
+				<MudText Color="Color.Secondary">Sort by: </MudText>
+				<MudChipSet T="TrackSortBy" SelectedValue="selectedSort" SelectedValueChanged="OnSortChanged" CheckMark SelectionMode="SelectionMode.SingleSelection">
+					<MudChip Text="purple" Color="Color.Secondary" Value="TrackSortBy.CreatedAt">CreatedAt</MudChip>
+					<MudChip Text="purple" Color="Color.Secondary" Value="TrackSortBy.Title">Title</MudChip>
+					<MudChip Text="purple" Color="Color.Secondary" Value="TrackSortBy.Artist">Artist</MudChip>
+					<MudChip Text="purple" Color="Color.Secondary" Value="TrackSortBy.Duration">Duration</MudChip>
+				</MudChipSet>
+				<MudSpacer />
+				<MudText Class="@(selectedOrder == SortOrder.Ascending ? "order-text asc-on" : "order-text off")">Asc</MudText>
+				<MudSwitch @bind-Value="isDesceding" Color="Color.Secondary" UncheckedColor="Color.Primary" />
+				<MudText Class="@(selectedOrder == SortOrder.Descending ? "order-text desc-on" : "order-text off")">Desc</MudText>
+			</div>
+
+			<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
+				@foreach (Track track in tracks)
+				{
+					<MudPaper Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+							  Style="border-radius: 1rem;"
+							  Height="5rem"
+							  @onclick="() => Play(track)">
+						<div class="hover-panel d-flex justify-center align-center">
+							<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
+						</div>
+
+						<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
+							<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
+									  Width="55" Height="55" ObjectFit="ObjectFit.Cover" />
+
+							<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
+								<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
+								<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
+							</div>
+						</div>
+
+						<div class="d-flex flex-row align-center">
+							<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+							<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
+						</div>
+					</MudPaper>
+				}
+			</MudStack>
+		}
+	}
+
+	@if (AudioService.CurrentTrack != null)
+	{
+		<Ongaku.Components.Components.EndHeightSpacer />
 	}
 </MudContainer>
 
 @code {
 	private List<Track>? tracks;
+	private List<Track>? reqTracks;
 	private bool loading = true;
+	private string _searchReq = "";
+	private TrackSortBy selectedSort = TrackSortBy.CreatedAt;
+
+	private SortOrder selectedOrder = SortOrder.Descending;
+
+	private bool isDesceding
+	{
+		get => selectedOrder == SortOrder.Descending;
+		set => ChangeOrderAsync(value);
+	}
+
+	private async void ChangeOrderAsync(bool descending)
+	{
+		selectedOrder = descending ? SortOrder.Descending: SortOrder.Ascending;
+		await LoadTracksAsync(selectedSort, selectedOrder);
+	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
 		{
-			await LoadTracksAsync();
+			await LoadTracksAsync(TrackSortBy.CreatedAt, SortOrder.Descending);
 		}
 	}
 
-	private async Task LoadTracksAsync()
+	private async Task LoadTracksAsync(TrackSortBy sort, SortOrder order)
 	{
+		selectedSort = sort;
+
 		loading = true;
 		StateHasChanged();
 
-		tracks = await TrackService.GetAllTracksAsync();
+		tracks = await TrackService.GetAllTracksAsync(selectedSort, selectedOrder);
 		loading = false;
 
 		StateHasChanged();
@@ -134,5 +207,23 @@
 		}
 
 		await AudioService.PlayFromAsync(tracks, track, Enums.QueueSourceEnum.Library);
+	}
+
+	private async Task OnReqChanged(string req)
+	{
+		if (req.Trim() != "")
+		{
+			reqTracks = await TrackService.GetTracksByTitleAsync(req);
+		}
+		else
+		{
+			reqTracks = null;
+		}
+	}
+
+	private async Task OnSortChanged(TrackSortBy sort)
+	{
+		selectedSort = sort;
+		await LoadTracksAsync(selectedSort, selectedOrder);
 	}
 }

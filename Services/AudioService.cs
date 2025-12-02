@@ -146,7 +146,7 @@ namespace Ongaku.Services {
             _queue = tracks.ToList();
             _currentIndex = _queue.FindIndex(t => t.Id == startTrack.Id);
 
-            if (_currentIndex < 0 )
+            if (_currentIndex < 0)
             {
                 throw new Exception("Start track not found in queue!");
             }
@@ -160,7 +160,7 @@ namespace Ongaku.Services {
             QueueSourceEnum source
             )
         {
-            if (_queueSource == QueueSourceEnum.None || _queueSource != source)
+            if (_queueSource == QueueSourceEnum.None || _queueSource != source || sourceTracks != _queue)
             {
                 BuildQueue(sourceTracks, track, source);
             }
