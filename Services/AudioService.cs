@@ -41,6 +41,11 @@ namespace Ongaku.Services {
             }
         }
 
+        public List<Track>? Queue
+        {
+            get => _queue;
+        }
+
         public AudioService(IJSRuntime js)
         {
             _js = js;

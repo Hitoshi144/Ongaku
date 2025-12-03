@@ -47,7 +47,13 @@
 		</MudPaper>
 	</div>
 
-	<FullScreenPlayer _hidden="!_playerOpened" OnHide="TogglePlayerOpened" />
+	<FullScreenPlayer _hidden="!_playerOpened" OnHide="TogglePlayerOpened" 
+	_track="_track"
+	_paused="_paused"
+	_time="_time"
+	_duration="_duration"
+	_queue="AudioService.Queue"
+	/>
 }
 
 @code {
@@ -93,7 +99,13 @@
 	private void HandleTimeChanged(double time)
 	{
 		_time = time;
-		_progress = ((Math.Round(_time / _duration * 100, 10)).ToString() + "%").Replace(",", ".");
+		if (_duration > 0)
+		{
+			_progress = ((Math.Round(_time / _duration * 100, 10)).ToString() + "%").Replace(",", ".");
+
+		}
+		else _progress = "0%";
+
 		InvokeAsync(StateHasChanged);
 	}
 

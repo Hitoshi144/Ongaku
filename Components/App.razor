@@ -45,6 +45,16 @@
         }
     </script>
 
+    <script>
+        window.ongakuLockScroll = () => {
+            document.body.style.overflow = "hidden";
+        };
+
+        window.ongakuUnlockScroll = () => {
+            document.body.style.overflow = "auto";
+        };
+    </script>
+
     <script src="_framework/blazor.web.js"></script>
     <script src=@Assets["_content/MudBlazor/MudBlazor.min.js"]></script>
 </body>

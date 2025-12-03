@@ -1,16 +1,35 @@
 ﻿.full-screen-player-container {
     position: fixed;
+    display: flex;
+    flex-direction: column;
     width: 100vw;
     height: 100vh;
+    top: 0;
+    left: 0;
     background-color: #000000;
     z-index: 9999;
     transition: transform 0.5s ease;
 }
 
 .showed {
-    transform: translateY(-95%);
+    transform: translateY(0);
 }
 
 .hidden {
     transform: translateY(100%);
+}
+
+.track-card-bg {
+    background-color: #111111;
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.track-title {
+    font-size: 1.25rem;
+}
+
+.artist-name {
+    font-size: 1.2rem;
+    opacity: 0.7;
 }

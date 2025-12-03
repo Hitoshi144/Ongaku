@@ -1,9 +1,55 @@
-﻿<div class="full-screen-player-container @(_hidden ? "hidden" : "showed")">
-	<div class="d-flex flex-row pa-3">
-		<MudSpacer />
-		<MudIconButton Size="Size.Large" @onclick="OnHideClicked" Color="Color.Primary" Icon="@Icons.Material.Outlined.ExpandCircleDown" />
+﻿@inject Ongaku.Services.AudioService AudioService
+@using Ongaku.Models
+@inject IJSRuntime JS
+@using System.Globalization
+@using Ongaku.Interfaces
+
+@if (_track != null)
+{
+	<div class="full-screen-player-container @(_hidden ? "hidden" : "showed")">
+		<div class="d-flex flex-row pa-3 flex-shrink-0">
+			<MudSpacer />
+			<MudIconButton Size="Size.Large" @onclick="OnHideClicked" Color="Color.Primary" Icon="@Icons.Material.Outlined.ExpandCircleDown" />
+		</div>
+		<div class="d-flex flex-1 flex-row align-center justify-center">
+			<div class="d-flex flex-column track-card-bg gap-3">
+				<MudImage Src="@_track.CoverPath" Width="400" Height="400" Style="border-radius: 1rem;" />
+
+				<div class="d-flex flex-column pa-1">
+					<MudText Class="track-title">@_track.Title</MudText>
+					<MudText Class="artist-name">@_track.Artist.Name</MudText>
+				</div>
+
+				<MudProgressLinear Value="_time / _duration * 100" Color="Color.Primary" Rounded Size="Size.Medium" />
+
+				<div class="d-flex flex-row justify-space-between mt-1" style="opacity: 0.8;">
+					<MudText>@FormatTime(_time)</MudText>
+					<MudText>@FormatTime(_duration)</MudText>
+				</div>
+
+				<div class="d-flex flex-row justify-space-between">
+					<MudIconButton Icon="@(_shuffle ? Icons.Material.Outlined.Shuffle : Icons.Material.Outlined.ArrowRightAlt)"
+						Color="Color.Primary"
+						Size="Size.Medium"
+						OnClick="@(() => _shuffle = !_shuffle)"
+						/>
+
+					<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" @onclick="AudioService.PlayPrevAsync" />
+					<MudFab Color="Color.Secondary" DropShadow="false"
+							@onclick="@(_paused? AudioService.ResumeAsync: AudioService.PauseAsync)"
+							StartIcon="@(_paused ? Icons.Material.Outlined.PlayArrow : Icons.Material.Outlined.Pause)" />
+					<MudIconButton Icon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" @onclick="AudioService.PlayNextAsync" />
+
+					<MudIconButton Icon="@GetQueueModeIcon()"
+								   OnClick="ToggleQueueMode"
+								   Color="Color.Primary"
+								   Size="Size.Medium" />
+				</div>
+			</div>
+
+		</div>
 	</div>
-</div>
+}
 
 @code {
 	[Parameter]
@@ -12,8 +58,79 @@
 	[Parameter]
 	public EventCallback OnHide { get; set; }
 
+	[Parameter]
+	public Track? _track { get; set; }
+
+	[Parameter]
+	public bool _paused { get; set; }
+
+	[Parameter]
+	public double _time { get; set; }
+
+	[Parameter]
+	public double _duration { get; set; }
+
+	[Parameter]
+	public IReadOnlyList<Track>? _queue { get; set; }
+
+	public bool _shuffle = false;
+	public QueueModeEnum _queueMode = QueueModeEnum.Loop;
+
 	private void OnHideClicked()
 	{
 		OnHide.InvokeAsync();
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (!_hidden) await JS.InvokeVoidAsync("ongakuLockScroll");
+		else await JS.InvokeVoidAsync("ongakuUnlockScroll");
+	}
+
+	private string FormatTime(double seconds)
+	{
+		int total = (int)Math.Floor(seconds);
+
+		int h = total / 3600;
+		int m = (total % 3600) / 60;
+		int s = total % 60;
+
+		if (h > 0)
+			return $"{h}:{m:D2}:{s:D2}";
+
+		return $"{m}:{s:D2}";
+	}
+
+	private string GetQueueModeIcon()
+	{
+		switch (_queueMode)
+		{
+			case QueueModeEnum.Loop:
+				return Icons.Material.Outlined.Repeat;
+			case QueueModeEnum.LoopOne:
+				return Icons.Material.Outlined.RepeatOne;
+			case QueueModeEnum.NoLoop:
+				return Icons.Material.Outlined.SyncDisabled;
+			default:
+				return Icons.Material.Outlined.Repeat;
+		}
+	}
+
+	private void ToggleQueueMode()
+	{
+		switch (_queueMode)
+		{
+			case QueueModeEnum.Loop:
+				_queueMode = QueueModeEnum.LoopOne;
+				return;
+			case QueueModeEnum.LoopOne:
+				_queueMode = QueueModeEnum.NoLoop;
+				return;
+			case QueueModeEnum.NoLoop:
+				_queueMode = QueueModeEnum.Loop;
+				return;
+			default:
+				return;
+		}
 	}
 }
