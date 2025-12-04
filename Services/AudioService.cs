@@ -58,6 +58,11 @@ namespace Ongaku.Services {
             get => _queue;
         }
 
+        public QueueSourceEnum QueueSource
+        {
+            get => _queueSource;
+        }
+
         public AudioService(IJSRuntime js)
         {
             _js = js;

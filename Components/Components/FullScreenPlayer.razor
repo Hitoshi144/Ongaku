@@ -68,7 +68,13 @@
 						<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
 							@foreach (Track track in _queue)
 							{
-								<MudPaper Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+								var id = $"track-{track.Id}";
+								@if (track.Id == _track.Id)
+								{
+									<MudText Class="on-current-track-info">сейчас играет <b style="color: #c59ae3;">@GetOnAQueueCurrentTrackInfo()</b></MudText>
+								}
+
+								<MudPaper id="@id" Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
 										  Style="border-radius: 1rem; width: 100%;"
 										  Height="5rem"
 										  @onclick="() => AudioService.PlayAsync(track)">
@@ -91,6 +97,12 @@
 										<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
 									</div>
 								</MudPaper>
+
+								@if (track.Id == _track.Id)
+								{
+									<div style="height: 2rem;" />
+									<MudText class="pl-1 pr-1" Style="opacity: 0.8;">Далее в очереди</MudText>
+								}
 							}
 						</MudStack>
 					</div>
@@ -206,5 +218,22 @@
 
 		Snackbar.Add($"{name} successfuly deleted!", Severity.Success);
 		StateHasChanged();
+	}
+
+	private string GetOnAQueueCurrentTrackInfo()
+	{
+		switch (AudioService.QueueSource)
+		{
+			case QueueSourceEnum.Library:
+				return "БИБЛИОТЕКА";
+			case QueueSourceEnum.Playlist:
+				return "плейлист ...";
+			case QueueSourceEnum.Artist:
+				return "артист ...";
+			case QueueSourceEnum.None:
+				return "НИЧЕГО";
+			default:
+				return "неизвестно что..";
+		}
 	}
 }

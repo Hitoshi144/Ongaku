@@ -91,3 +91,12 @@
         transform: translateX(-50%)
     }
 }
+
+.on-current-track-info {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 1.5rem;
+    opacity: 0.8;
+}
