@@ -1,3 +1,5 @@
+let _currentRequest = null;
+
 export function play(src) {
     const audio = document.getElementById("global-audio");
     audio.src = src;
@@ -54,9 +56,16 @@ export function playWithFullLoad(src) {
     return new Promise((resolve, reject) => {
         const audio = document.getElementById("global-audio");
 
+        if (_currentRequest) {
+            _currentRequest.abort();
+            _currentRequest = null;
+        }
+
         pause();
 
         const xhr = new XMLHttpRequest();
+        _currentRequest = xhr;
+
         xhr.open('GET', src, true);
         xhr.responseType = 'blob';
 
