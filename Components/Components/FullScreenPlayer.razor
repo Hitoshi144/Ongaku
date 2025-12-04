@@ -3,6 +3,7 @@
 @inject IJSRuntime JS
 @using System.Globalization
 @using Ongaku.Interfaces
+@inject ISnackbar Snackbar
 
 @if (_track != null)
 {
@@ -11,54 +12,90 @@
 			<MudSpacer />
 			<MudIconButton Size="Size.Large" @onclick="OnHideClicked" Color="Color.Primary" Icon="@Icons.Material.Outlined.ExpandCircleDown" />
 		</div>
-		<div class="d-flex flex-1 flex-row align-center justify-center">
-			<div class="d-flex flex-column track-card-bg gap-3">
-				<div class="d-flex relative" style="border-radius: 1rem; overflow: hidden;">
-					<MudImage Src="@_track.CoverPath" Width="400" Height="400"  />
 
-					@if (_loading)
-					{
-						<div class="d-flex align-center justify-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
-							<MudProgressCircular Color="Color.Primary" Indeterminate Size="Size.Large" />
-						</div>
-					}
-				</div>
+		<div class="d-flex flex-1 flex-row align-start justify-space-around" style="max-height: 100%;">
+			<div style="display: flex; align-items: center; justify-content: center; height: 100%; padding-bottom: 84px;">
+				<div class="d-flex flex-column track-card-bg gap-3 ml-20">
+					<div class="d-flex relative" style="border-radius: 1rem; overflow: hidden;">
+						<MudImage Src="@_track.CoverPath" Width="450" Height="450" ObjectFit="ObjectFit.Cover"/>
 
-				<div class="d-flex flex-column pa-1">
-					<MudText Class="track-title">@_track.Title</MudText>
-					<MudText Class="artist-name">@_track.Artist.Name</MudText>
-				</div>
+						@if (_loading)
+						{
+							<div class="d-flex align-center justify-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
+								<MudProgressCircular Color="Color.Primary" Indeterminate Size="Size.Large" />
+							</div>
+						}
+					</div>
 
-				<MudSlider Step="0.001" Max="100" Min="0" Value="_time / _duration * 100" Color="Color.Primary" Rounded Size="Size.Medium" Variant="Variant.Filled"
-					ValueChanged="OnTimeChanged" Immediate T="double" Disabled="@(_loading ? true : false)"
-				/>
+					<div class="d-flex flex-column pa-1" style="max-width: 450px; overflow: hidden;">
+						<MudText Class="track-title scrolling-text">@_track.Title</MudText>
+						<MudText Class="artist-name scrolling-text">@_track.Artist.Name</MudText>
+					</div>
 
-				<div class="d-flex flex-row justify-space-between mt-1" style="opacity: 0.8;">
-					<MudText>@FormatTime(_time)</MudText>
-					<MudText>@FormatTime(_duration)</MudText>
-				</div>
+					<MudSlider Step="0.001" Max="100" Min="0" Value="_time / _duration * 100" Color="Color.Primary" Rounded Size="Size.Medium" Variant="Variant.Filled"
+							   ValueChanged="OnTimeChanged" Immediate T="double" Disabled="@(_loading ? true : false)" />
 
-				<div class="d-flex flex-row justify-space-between">
-					<MudIconButton Icon="@(_shuffle ? Icons.Material.Outlined.Shuffle : Icons.Material.Outlined.ArrowRightAlt)"
-						Color="Color.Primary"
-						Size="Size.Medium"
-						OnClick="@(() => _shuffle = !_shuffle)"
-						/>
+					<div class="d-flex flex-row justify-space-between mt-1" style="opacity: 0.8;">
+						<MudText>@FormatTime(_time)</MudText>
+						<MudText>@FormatTime(_duration)</MudText>
+					</div>
 
-					<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" @onclick="AudioService.PlayPrevAsync" />
-					<MudFab Color="Color.Secondary" DropShadow="false"
-							@onclick="@(_paused? AudioService.ResumeAsync: AudioService.PauseAsync)"
-							Disabled="@(_loading ? true : false)"
-							StartIcon="@(_paused ? Icons.Material.Outlined.PlayArrow : Icons.Material.Outlined.Pause)" />
-					<MudIconButton Icon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" @onclick="AudioService.PlayNextAsync" />
+					<div class="d-flex flex-row justify-space-between">
+						<MudIconButton Icon="@(_shuffle? Icons.Material.Outlined.Shuffle : Icons.Material.Outlined.ArrowRightAlt)"
+									   Color="Color.Primary"
+									   Size="Size.Medium"
+									   OnClick="@(() => _shuffle = !_shuffle)" />
 
-					<MudIconButton Icon="@GetQueueModeIcon()"
-								   OnClick="ToggleQueueMode"
-								   Color="Color.Primary"
-								   Size="Size.Medium" />
+						<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" @onclick="AudioService.PlayPrevAsync" />
+						<MudFab Color="Color.Secondary" DropShadow="false" Size="Size.Large"
+								@onclick="@(_paused? AudioService.ResumeAsync: AudioService.PauseAsync)"
+								Disabled="@(_loading ? true : false)"
+								StartIcon="@(_paused ? Icons.Material.Outlined.PlayArrow : Icons.Material.Outlined.Pause)" />
+						<MudIconButton Icon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" @onclick="AudioService.PlayNextAsync" />
+
+						<MudIconButton Icon="@GetQueueModeIcon()"
+									   OnClick="ToggleQueueMode"
+									   Color="Color.Primary"
+									   Size="Size.Medium" />
+					</div>
 				</div>
 			</div>
 
+			@if (_queue != null)
+			{
+				<div class="d-flex flex-column queue-container">
+					<div class="d-flex flex-column queue-list-container">
+						<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
+							@foreach (Track track in _queue)
+							{
+								<MudPaper Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+										  Style="border-radius: 1rem; width: 100%;"
+										  Height="5rem"
+										  @onclick="() => AudioService.PlayAsync(track)">
+									<div class="hover-panel d-flex justify-center align-center">
+										<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
+									</div>
+
+									<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
+										<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
+												  Width="55" Height="55" ObjectFit="ObjectFit.Cover" />
+
+										<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
+											<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
+											<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
+										</div>
+									</div>
+
+									<div class="d-flex flex-row align-center">
+										<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+										<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
+									</div>
+								</MudPaper>
+							}
+						</MudStack>
+					</div>
+				</div>
+			}
 		</div>
 	</div>
 }
@@ -157,6 +194,17 @@
 
 		await AudioService.SetTimeAsync(newCalcTime);
 
+		StateHasChanged();
+	}
+
+	private void DeleteTrack(int id)
+	{
+		if (_queue == null) return;
+
+		string name = _queue.FirstOrDefault(t => t.Id == id)!.Title;
+		_queue = _queue.Where(t => t.Id != id).ToList();
+
+		Snackbar.Add($"{name} successfuly deleted!", Severity.Success);
 		StateHasChanged();
 	}
 }

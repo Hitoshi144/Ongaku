@@ -33,3 +33,61 @@
     font-size: 1.2rem;
     opacity: 0.7;
 }
+
+.queue-container {
+    position: relative;
+    width: 50%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+}
+
+.queue-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+    z-index: 15;
+    pointer-events: none;
+}
+
+.queue-container::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 250px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,1));
+    z-index: 15;
+    pointer-events: none;
+}
+
+.queue-list-container {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 100px;
+    padding-bottom: 250px
+}
+
+.scrolling-text {
+    text-wrap: nowrap;
+}
+
+.scrolling-text:hover {
+    animation: RightToLeft 10s infinite linear;
+}
+
+@keyframes RightToLeft {
+    from {
+        transform: translateX(5%)
+    }
+    to {
+        transform: translateX(-50%)
+    }
+}
