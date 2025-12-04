@@ -13,14 +13,25 @@
 		</div>
 		<div class="d-flex flex-1 flex-row align-center justify-center">
 			<div class="d-flex flex-column track-card-bg gap-3">
-				<MudImage Src="@_track.CoverPath" Width="400" Height="400" Style="border-radius: 1rem;" />
+				<div class="d-flex relative" style="border-radius: 1rem; overflow: hidden;">
+					<MudImage Src="@_track.CoverPath" Width="400" Height="400"  />
+
+					@if (_loading)
+					{
+						<div class="d-flex align-center justify-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
+							<MudProgressCircular Color="Color.Primary" Indeterminate Size="Size.Large" />
+						</div>
+					}
+				</div>
 
 				<div class="d-flex flex-column pa-1">
 					<MudText Class="track-title">@_track.Title</MudText>
 					<MudText Class="artist-name">@_track.Artist.Name</MudText>
 				</div>
 
-				<MudProgressLinear Value="_time / _duration * 100" Color="Color.Primary" Rounded Size="Size.Medium" />
+				<MudSlider Step="0.001" Max="100" Min="0" Value="_time / _duration * 100" Color="Color.Primary" Rounded Size="Size.Medium" Variant="Variant.Filled"
+					ValueChanged="OnTimeChanged" Immediate T="double" Disabled="@(_loading ? true : false)"
+				/>
 
 				<div class="d-flex flex-row justify-space-between mt-1" style="opacity: 0.8;">
 					<MudText>@FormatTime(_time)</MudText>
@@ -37,6 +48,7 @@
 					<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" @onclick="AudioService.PlayPrevAsync" />
 					<MudFab Color="Color.Secondary" DropShadow="false"
 							@onclick="@(_paused? AudioService.ResumeAsync: AudioService.PauseAsync)"
+							Disabled="@(_loading ? true : false)"
 							StartIcon="@(_paused ? Icons.Material.Outlined.PlayArrow : Icons.Material.Outlined.Pause)" />
 					<MudIconButton Icon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" @onclick="AudioService.PlayNextAsync" />
 
@@ -73,8 +85,11 @@
 	[Parameter]
 	public IReadOnlyList<Track>? _queue { get; set; }
 
-	public bool _shuffle = false;
-	public QueueModeEnum _queueMode = QueueModeEnum.Loop;
+	[Parameter]
+	public bool _loading { get; set; }
+
+	private bool _shuffle = false;
+	private QueueModeEnum _queueMode = QueueModeEnum.Loop;
 
 	private void OnHideClicked()
 	{
@@ -132,5 +147,16 @@
 			default:
 				return;
 		}
+	}
+
+	private async void OnTimeChanged(double newTime)
+	{
+		if (_duration <= 0 || _track == null) return;
+
+		double newCalcTime = newTime / 100 * _duration;
+
+		await AudioService.SetTimeAsync(newCalcTime);
+
+		StateHasChanged();
 	}
 }

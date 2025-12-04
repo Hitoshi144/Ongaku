@@ -55,6 +55,18 @@
         };
     </script>
 
+    <script>
+    if (window.XMLHttpRequest) {
+        XMLHttpRequest.prototype.originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+            if (url.includes('.mp3') || url.includes('.wav') || url.includes('.ogg')) {
+                this.timeout = 300000;
+            }
+            this.originalOpen(method, url, async, user, password);
+        };
+    }
+    </script>
+
     <script src="_framework/blazor.web.js"></script>
     <script src=@Assets["_content/MudBlazor/MudBlazor.min.js"]></script>
 </body>

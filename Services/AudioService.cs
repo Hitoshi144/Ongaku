@@ -8,6 +8,7 @@ namespace Ongaku.Services {
         private IJSObjectReference? _module;
         private Track? _currentTrack;
         private bool _isPaused;
+        private bool _isLoading;
         private double? _duration;
 
         private List<Track> _queue = new();
@@ -16,6 +17,7 @@ namespace Ongaku.Services {
 
         public event Action<Track?>? OnTrackChanged;
         public event Action<bool>? OnPauseStateChanged;
+        public event Action<bool>? OnLoadingStateChanged;
         public event Action<double>? OnTimeChanged;
         public event Action<double>? OnDurationChanged;
 
@@ -38,6 +40,16 @@ namespace Ongaku.Services {
             {
                 _isPaused = value;
                 OnPauseStateChanged?.Invoke(value);
+            }
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            private set
+            {
+                _isLoading = value;
+                OnLoadingStateChanged?.Invoke(value);
             }
         }
 
@@ -90,7 +102,10 @@ namespace Ongaku.Services {
         public async Task PlayAsync(Track track)
         {
             CurrentTrack = track;
-            _duration = await _module!.InvokeAsync<double>("play", track.FilePath);
+            IsPaused = true;
+            IsLoading = true;
+            _duration = await _module!.InvokeAsync<double>("playWithFullLoad", track.FilePath);
+            IsLoading = false;
             IsPaused = false;
 
             OnDurationChanged?.Invoke((double)_duration);
@@ -210,6 +225,12 @@ namespace Ongaku.Services {
                     await PlayAsync(_queue[_currentIndex]);
                 }
             }
+        }
+
+        [JSInvokable]
+        public void OnLoadProgress(double percent)
+        {
+            Console.WriteLine($"Load progress: {percent}%");
         }
     }
 }
