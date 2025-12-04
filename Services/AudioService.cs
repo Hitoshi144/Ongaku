@@ -16,12 +16,18 @@ namespace Ongaku.Services {
         private QueueSourceEnum _queueSource = QueueSourceEnum.None;
         private QueueModeEnum _queueMode = QueueModeEnum.Loop;
 
+        private Random _random = new Random();
+        private bool _isShuffeled = false;
+        private List<Track> _originalQueue = new();
+
         public event Action<Track?>? OnTrackChanged;
         public event Action<bool>? OnPauseStateChanged;
         public event Action<bool>? OnLoadingStateChanged;
         public event Action<double>? OnTimeChanged;
         public event Action<double>? OnDurationChanged;
         public event Action<QueueModeEnum>? OnQueueModeChanged;
+        public event Action<List<Track>>? OnQueueChanged;
+        public event Action<bool>? OnShuffleStateChanged;
 
         private System.Timers.Timer? _timer;
 
@@ -58,11 +64,27 @@ namespace Ongaku.Services {
         public List<Track>? Queue
         {
             get => _queue;
+            set
+            {
+                if (value == null) return;
+                _queue = value;
+                OnQueueChanged?.Invoke(value);
+            }
         }
 
         public QueueSourceEnum QueueSource
         {
             get => _queueSource;
+        }
+
+        public bool IsShufeled
+        {
+            get => _isShuffeled;
+            set
+            {
+                _isShuffeled = value;
+                OnShuffleStateChanged?.Invoke(value);
+            }
         }
 
         public QueueModeEnum QueueMode
@@ -193,6 +215,8 @@ namespace Ongaku.Services {
             }
 
             _queueSource = source;
+            IsShufeled = false;
+            _originalQueue.Clear();
         }
 
         public async Task PlayFromAsync(
@@ -259,6 +283,73 @@ namespace Ongaku.Services {
         public void OnLoadProgress(double percent)
         {
             Console.WriteLine($"Load progress: {percent}%");
+        }
+
+        public void ShuffleQueue()
+        {
+            if (_queue == null || _queue.Count == 0)
+            {
+                return;
+            }
+
+            if (!_isShuffeled)
+            {
+                _originalQueue = new List<Track>(_queue);
+            }
+
+            Track currentTrack = _queue[_currentIndex];
+            List<Track> toShuffle = new List<Track>(_queue);
+            toShuffle.RemoveAt(_currentIndex);
+
+            int n = toShuffle.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = _random.Next(n + 1);
+                Track value = toShuffle[k];
+                toShuffle[k] = toShuffle[n];
+                toShuffle[n] = value;
+            }
+
+            toShuffle.Insert(0, currentTrack);
+
+            _queue = toShuffle;
+            _currentIndex = 0;
+            IsShufeled = true;
+        }
+
+        public void UnshuffleQueue()
+        {
+            if (!_isShuffeled || _originalQueue.Count == 0)
+            {
+                return;
+            }
+
+            _queue = new List<Track>(_originalQueue);
+
+            if (CurrentTrack != null)
+            {
+                _currentIndex = _queue.FindIndex(t => t.Id == CurrentTrack.Id);
+
+                if (_currentIndex < 0)
+                {
+                    _currentIndex = 0;
+                }
+            }
+
+            IsShufeled = false;
+        }
+
+        public void ToggleShuffle()
+        {
+            if (_isShuffeled)
+            {
+                UnshuffleQueue();
+            }
+            else
+            {
+                ShuffleQueue();
+            }
         }
     }
 }

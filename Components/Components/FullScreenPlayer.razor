@@ -44,7 +44,7 @@
 						<MudIconButton Icon="@(_shuffle? Icons.Material.Outlined.Shuffle : Icons.Material.Outlined.ArrowRightAlt)"
 									   Color="Color.Primary"
 									   Size="Size.Medium"
-									   OnClick="@(() => _shuffle = !_shuffle)" />
+									   OnClick="@AudioService.ToggleShuffle" />
 
 						<MudIconButton Icon="@Icons.Material.Outlined.SkipPrevious" Color="Color.Primary" @onclick="AudioService.PlayPrevAsync" />
 						<MudFab Color="Color.Secondary" DropShadow="false" Size="Size.Large"
@@ -145,11 +145,18 @@
 		_queueMode = AudioService.QueueMode;
 
 		AudioService.OnQueueModeChanged += HandleQueueModeChanged;
+		AudioService.OnShuffleStateChanged += HandleShuffleStateChanged;
 	}
 
 	private void HandleQueueModeChanged(QueueModeEnum newMode)
 	{
 		_queueMode = newMode;
+		InvokeAsync(StateHasChanged);
+	}
+
+	private void HandleShuffleStateChanged(bool newShuffleState)
+	{
+		_shuffle = newShuffleState;
 		InvokeAsync(StateHasChanged);
 	}
 
@@ -252,5 +259,6 @@
 	public void Dispose()
 	{
 		AudioService.OnQueueModeChanged -= HandleQueueModeChanged;
+		AudioService.OnShuffleStateChanged -= HandleShuffleStateChanged;
 	}
 }
