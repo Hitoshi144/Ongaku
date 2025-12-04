@@ -14,12 +14,14 @@ namespace Ongaku.Services {
         private List<Track> _queue = new();
         private int _currentIndex = -1;
         private QueueSourceEnum _queueSource = QueueSourceEnum.None;
+        private QueueModeEnum _queueMode = QueueModeEnum.Loop;
 
         public event Action<Track?>? OnTrackChanged;
         public event Action<bool>? OnPauseStateChanged;
         public event Action<bool>? OnLoadingStateChanged;
         public event Action<double>? OnTimeChanged;
         public event Action<double>? OnDurationChanged;
+        public event Action<QueueModeEnum>? OnQueueModeChanged;
 
         private System.Timers.Timer? _timer;
 
@@ -61,6 +63,19 @@ namespace Ongaku.Services {
         public QueueSourceEnum QueueSource
         {
             get => _queueSource;
+        }
+
+        public QueueModeEnum QueueMode
+        {
+            get => _queueMode;
+            set
+            {
+                if (_queueMode != value)
+                {
+                    _queueMode = value;
+                    OnQueueModeChanged?.Invoke(value);
+                }
+            }
         }
 
         public AudioService(IJSRuntime js)
@@ -107,6 +122,7 @@ namespace Ongaku.Services {
         public async Task PlayAsync(Track track)
         {
             CurrentTrack = track;
+            _currentIndex = _queue.IndexOf(track);
             IsPaused = true;
             IsLoading = true;
             _duration = await _module!.InvokeAsync<double>("playWithFullLoad", track.FilePath);
@@ -200,7 +216,11 @@ namespace Ongaku.Services {
         [JSInvokable("PlayNext")]
         public async Task PlayNextAsync()
         {
-            if (_queue != null && _queueSource != QueueSourceEnum.None)
+            if (_queueMode == QueueModeEnum.LoopOne)
+            {
+                await PlayAsync(_queue[_currentIndex]);
+            }
+            else if (_queue != null && _queueSource != QueueSourceEnum.None)
             {
                 if (_currentIndex != _queue.Count - 1)
                 {
@@ -209,8 +229,11 @@ namespace Ongaku.Services {
                 }
                 else
                 {
-                    _currentIndex = 0;
-                    await PlayAsync(_queue[_currentIndex]);
+                    if (_queueMode == QueueModeEnum.Loop)
+                    {
+                        _currentIndex = 0;
+                        await PlayAsync(_queue[_currentIndex]);
+                    }
                 }
             }
         }

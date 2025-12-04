@@ -140,6 +140,19 @@
 	private bool _shuffle = false;
 	private QueueModeEnum _queueMode = QueueModeEnum.Loop;
 
+	protected override void OnInitialized()
+	{
+		_queueMode = AudioService.QueueMode;
+
+		AudioService.OnQueueModeChanged += HandleQueueModeChanged;
+	}
+
+	private void HandleQueueModeChanged(QueueModeEnum newMode)
+	{
+		_queueMode = newMode;
+		InvokeAsync(StateHasChanged);
+	}
+
 	private void OnHideClicked()
 	{
 		OnHide.InvokeAsync();
@@ -167,17 +180,13 @@
 
 	private string GetQueueModeIcon()
 	{
-		switch (_queueMode)
+		return _queueMode switch
 		{
-			case QueueModeEnum.Loop:
-				return Icons.Material.Outlined.Repeat;
-			case QueueModeEnum.LoopOne:
-				return Icons.Material.Outlined.RepeatOne;
-			case QueueModeEnum.NoLoop:
-				return Icons.Material.Outlined.SyncDisabled;
-			default:
-				return Icons.Material.Outlined.Repeat;
-		}
+			QueueModeEnum.Loop => Icons.Material.Filled.Repeat,
+			QueueModeEnum.LoopOne => Icons.Material.Filled.RepeatOne,
+			QueueModeEnum.NoLoop => Icons.Material.Filled.RepeatOn,
+			_ => Icons.Material.Filled.Repeat
+		};
 	}
 
 	private void ToggleQueueMode()
@@ -186,16 +195,19 @@
 		{
 			case QueueModeEnum.Loop:
 				_queueMode = QueueModeEnum.LoopOne;
-				return;
+				break;
 			case QueueModeEnum.LoopOne:
 				_queueMode = QueueModeEnum.NoLoop;
-				return;
+				break;
 			case QueueModeEnum.NoLoop:
 				_queueMode = QueueModeEnum.Loop;
-				return;
+				break;
 			default:
 				return;
 		}
+
+		AudioService.QueueMode = _queueMode;
+		StateHasChanged();
 	}
 
 	private async void OnTimeChanged(double newTime)
@@ -235,5 +247,10 @@
 			default:
 				return "неизвестно что..";
 		}
+	}
+
+	public void Dispose()
+	{
+		AudioService.OnQueueModeChanged -= HandleQueueModeChanged;
 	}
 }
