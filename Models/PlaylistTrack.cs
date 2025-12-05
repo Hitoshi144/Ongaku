@@ -4,6 +4,6 @@
         public Playlist? Playlist { get; set; }
 
         public int TrackId { get; set; }
-        public required Track Track { get; set; }
+        public Track? Track { get; set; }
     }
 }

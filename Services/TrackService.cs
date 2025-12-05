@@ -7,15 +7,15 @@ using Ongaku.Models;
 
 namespace Ongaku.Services {
     public class TrackService {
-        private readonly OngakuContext _context;
+        private readonly IDbContextFactory<OngakuContext> _contextFactory;
         private readonly IWebHostEnvironment _environment;
         private readonly ArtistService _artistService;
         private readonly CoverRandomerService _coverRandomerService;
 
-        public TrackService(IWebHostEnvironment env, OngakuContext context, ArtistService artistService, CoverRandomerService coverRandomerService)
+        public TrackService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context, ArtistService artistService, CoverRandomerService coverRandomerService)
         {
             _environment = env;
-            _context = context;
+            _contextFactory = context;
             _artistService = artistService;
             _coverRandomerService = coverRandomerService;
         }
@@ -25,6 +25,7 @@ namespace Ongaku.Services {
             SortOrder orderBy = SortOrder.Descending
             )
         {
+            using var _context = _contextFactory.CreateDbContext();
             var query = _context.Tracks.Include(t => t.Artist).AsQueryable();
 
             query = sortBy switch
@@ -55,11 +56,13 @@ namespace Ongaku.Services {
             int artistId
             )
         {
+            using var _context = _contextFactory.CreateDbContext();
             return await _context.Tracks.Where(t => t.ArtistId == artistId).Include(t => t.Artist).ToListAsync();
         }
 
         public async Task AddTrackAsync(string title, Stream stream)
         {
+            using var _context = _contextFactory.CreateDbContext();
             var folder = Path.Combine(_environment.WebRootPath, "uploads");
             Directory.CreateDirectory( folder );
 
@@ -143,16 +146,19 @@ namespace Ongaku.Services {
 
         public async Task<List<Track>> GetTracksByTitleAsync(string req)
         {
+            using var _context = _contextFactory.CreateDbContext();
             return await _context.Tracks.Where(t => EF.Functions.ILike(t.Title, $"%{req}%")).ToListAsync();
         }
 
         public async Task<TimeSpan> GetMaxDurationAsync()
         {
+            using var _context = _contextFactory.CreateDbContext();
             return await _context.Tracks.Select(t => t.Duration).DefaultIfEmpty(TimeSpan.Zero).MaxAsync();
         }
 
         public async Task<TimeSpan> GetMinDurationAsync()
         {
+            using var _context = _contextFactory.CreateDbContext();
             return await _context.Tracks.Select(t => t.Duration).DefaultIfEmpty(TimeSpan.Zero).MinAsync();
         }
 
@@ -160,6 +166,7 @@ namespace Ongaku.Services {
         {
             try
             {
+                using var _context = _contextFactory.CreateDbContext();
                 Track? targetTrack = await _context.Tracks.SingleOrDefaultAsync(t => t.Id == id);
                 if (targetTrack == null) return;
 
@@ -183,6 +190,7 @@ namespace Ongaku.Services {
 
         public async Task ChangeCoverAsync(IBrowserFile file, Track track)
         {
+            using var _context = _contextFactory.CreateDbContext();
             _context.Attach(track);
 
             var coversFolder = Path.Combine(_environment.WebRootPath, "covers");
@@ -210,6 +218,7 @@ namespace Ongaku.Services {
 
         public async Task ChangeTitleAsync(string newTitle, Track track)
         {
+            using var _context = _contextFactory.CreateDbContext();
             _context.Attach(track);
 
             track.Title = newTitle;
@@ -218,6 +227,7 @@ namespace Ongaku.Services {
 
         public async Task ChangeArtistAsync(string newArtist, Track track)
         {
+            using var _context = _contextFactory.CreateDbContext();
             _context.Attach(track);
 
             Artist? exist = await _artistService.GetArtistByName(newArtist);

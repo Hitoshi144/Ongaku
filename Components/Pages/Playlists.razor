@@ -1,0 +1,39 @@
+﻿@page "/playlists"
+@inject Ongaku.Services.PlaylistService PlaylistService
+@using Ongaku.Models
+@inject IDialogService DialogService
+
+<PageTitle>Playlists</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
+	<div class="d-flex flex-row justify-space-between">
+		<MudText>@(_playlists == null ? 0 : _playlists.Count) playlist</MudText>
+		<MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" Color="Color.Secondary" @onclick="OpenCreatePlaylistAsync"
+				   Style="border-radius: 2rem; height: 2rem;">New</MudButton>
+	</div>
+</MudContainer>
+
+@code {
+	private List<Playlist>? _playlists;
+
+	protected override async Task OnAfterRenderAsync(bool firstrender)
+	{
+		if (firstrender)
+		{
+			_playlists = await PlaylistService.GetAllPlaylistsAsync();
+		}
+	}
+
+	private async Task OpenCreatePlaylistAsync()
+	{
+		var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+		var dialog = await DialogService.ShowAsync<Dialogs.CreatePlaylist>("Select tracks", options);
+		var result = await dialog.Result;
+
+		if (result != null && !result.Canceled && result.Data is true)
+		{
+			_playlists = await PlaylistService.GetAllPlaylistsAsync();
+		}
+	}
+}

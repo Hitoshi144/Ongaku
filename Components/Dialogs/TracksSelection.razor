@@ -1,0 +1,119 @@
+﻿@using Ongaku.Models
+@inject Ongaku.Services.TrackService TrackService
+
+<MudDialog>
+	<TitleContent>Select tracks</TitleContent>
+
+	<DialogContent>
+		<MudStack Style="width: 100%;" Class="d-flex flex-column gap-4 align-center">
+			@if (_tracks == null)
+			{
+				<MudProgressCircular Color="Color.Primary" Indeterminate />
+			}
+			else if (_tracks.Count == 0)
+			{
+				<MudText>No tracks :(</MudText>
+			}
+			else
+			{
+				@foreach (var track in _tracks)
+				{
+					<div class="d-flex flex-row justify-space-between track-card-bg align-center gap-2 track-select-item" style="width: 100%; padding: 1rem !important;">
+						<div class="d-flex flex-row gap-2">
+							<MudCheckBox 
+								Value="@((_choiced != null && _choiced.Any(t => t.Id == track.Id)) || (_selectedTracks != null && _selectedTracks.Any(t => t.Id == track.Id)) ? true : false)" 
+								T="bool" ValueChanged="c => ToggleTrackSelection(c, track)" Size="Size.Large" Color="Color.Secondary" />
+								<div class="d-flex flex-column" style="width: 20rem; overflow: clip;">
+									<MudText Class="track-title" Style="text-wrap: nowrap;">@track.Title</MudText>
+									<MudText Class="artist-name" Style="text-wrap: nowrap;">@track.Artist.Name</MudText>
+								</div>
+						</div>
+
+						<MudText>@FormateDuration(track.Duration)</MudText>
+					</div>
+				}
+			}
+		</MudStack>
+	</DialogContent>
+
+	<DialogActions>
+		<MudToolBar Gutters="true" Class="relative d-flex justify-end gap-4">
+			<MudButton Color="Color.Secondary" Variant="Variant.Filled" @onclick="SubmitSelected">
+				@if (_proccessing)
+				{
+					<MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+					<MudText Class="ms-2">Processing</MudText>
+				}
+				else
+				{
+					<MudText>
+						Submit
+					</MudText>
+				}
+			</MudButton>
+		</MudToolBar>
+	</DialogActions>
+</MudDialog>
+
+@code {
+	[CascadingParameter]
+	private IMudDialogInstance? MudDialog { get; set; }
+
+	[Parameter]
+	public List<Track>? _choiced { get; set; }
+
+	private List<Track>? _tracks;
+	private List<Track> _selectedTracks = new();
+	private bool _proccessing = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (_choiced != null && _choiced.Count > 0)
+		{
+			_selectedTracks = _choiced;
+		}
+
+		_tracks = await TrackService.GetAllTracksAsync();
+
+		await base.OnInitializedAsync();
+	}
+
+	private void ToggleTrackSelection(bool state, Track track)
+	{
+		if (state)
+		{
+			_selectedTracks.Add(track);
+		}
+		else
+		{
+			_selectedTracks.Remove(track);
+		}
+		StateHasChanged();
+	}
+
+	private string FormateDuration(TimeSpan duration)
+	{
+		if (duration.Hours > 0)
+		{
+			return $"{duration.Hours}:{duration.Minutes:D2}:{duration.Seconds:D2}";
+
+		}
+		else
+		{
+			return $"{duration.Minutes:D2}:{duration.Seconds:D2}";
+		}
+	}
+
+	private void SubmitSelected()
+	{
+		_proccessing = true;
+		MudDialog!.Close(DialogResult.Ok(_selectedTracks));
+	}
+
+	private bool IsTrackSelected(Track track)
+	{
+		return _selectedTracks.Any(t =>
+			t.Id == track.Id
+		);
+	}
+}

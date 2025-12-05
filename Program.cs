@@ -15,13 +15,14 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 
-builder.Services.AddDbContext<OngakuContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContextFactory<OngakuContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<TrackService>();
 builder.Services.AddScoped<ArtistService>();
 builder.Services.AddScoped<CoverRandomerService>();
 builder.Services.AddScoped<AudioService>();
 builder.Services.AddScoped<ViewportService>();
+builder.Services.AddScoped<PlaylistService>();
 
 var app = builder.Build();
 

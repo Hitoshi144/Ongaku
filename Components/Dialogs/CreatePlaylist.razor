@@ -1,0 +1,89 @@
+﻿@using Ongaku.Models
+@inject IDialogService DialogService
+@inject Ongaku.Services.PlaylistService PlaylistService
+
+<MudDialog>
+	<TitleContent>Create playlist</TitleContent>
+
+	<DialogContent>
+		<MudStack Style="width: 100%;" Class="d-flex flex-column gap-4 align-center">
+			<MudTextField Style="width: 80%; min-width: 20rem;" Label="Title" @bind-Value="@_name" Variant="Variant.Outlined" />
+		
+			<MudButton Color="Color.Secondary" Variant="Variant.Outlined"
+				@onclick="OpenTrackSelectionAsync" 
+			>Select tracks</MudButton>
+
+			@if (_tracks != null && _tracks.Count > 0)
+			{
+				<div class="d-flex flex-row flex-wrap gap-3" style="width: 80%; max-height: 400px; overflow: auto;">
+					@foreach (var track in _tracks)
+					{
+						<div class="track-select-item" style="max-width: 50%; overflow: hidden; padding: 0.5rem;">
+							@track.Title
+						</div>
+					}
+				</div>
+			}
+		</MudStack>
+	</DialogContent>
+
+	<DialogActions>
+		<MudToolBar Gutters="false" Class="relative d-flex justify-end gap-4">
+			<MudButton Color="Color.Secondary" Disabled="@(_name.Trim() == "" || _proccessing)"
+			Variant="Variant.Filled" @onclick="Create"
+			>
+				@if(_proccessing)
+				{
+					<MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate />
+					<MudText Class="ms-2">Proccessing</MudText>
+				}
+				else
+				{
+					<MudText>Create</MudText>
+				}
+			</MudButton>
+			<MudButton Color="Color.Error" Variant="Variant.Filled" @onclick="Cancel">
+				Cancel
+			</MudButton>
+		</MudToolBar>
+	</DialogActions>
+</MudDialog>
+
+@code {
+	[CascadingParameter]
+	private IMudDialogInstance? MudDialog { get; set; }
+
+	private string _name = "";
+	private List<Track>? _tracks;
+	private bool _proccessing = false;
+
+	private void Cancel()
+	{
+		MudDialog!.Close(DialogResult.Cancel());
+	}
+
+	private async Task OpenTrackSelectionAsync()
+	{
+		var parameters = new DialogParameters
+		{
+			{"_choiced", _tracks},
+		};
+
+		var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+		var dialog = await DialogService.ShowAsync<Dialogs.TracksSelection>("Select tracks", parameters, options);
+		var result = await dialog.Result;
+
+		if (result != null && !result.Canceled && result.Data is List<Track> tracks)
+		{
+			_tracks = tracks;
+		}
+	}
+
+	private async Task Create()
+	{
+		await PlaylistService.CreatePlaylistAsync(_name, _tracks);
+
+		MudDialog!.Close(DialogResult.Ok(true));
+	}
+}
