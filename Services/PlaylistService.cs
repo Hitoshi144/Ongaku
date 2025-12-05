@@ -46,5 +46,51 @@ namespace Ongaku.Services {
             using var _context = _contextFactory.CreateDbContext();
             return await _context.Playlists.Include(p => p.PlaylistTracks).AsQueryable().ToListAsync();
         }
+
+        public async Task DeletePlaylist(Playlist playlist)
+        {
+            using var _context = _contextFactory.CreateDbContext();
+            List<PlaylistTrack> playlistTracks = await _context.PlaylistTracks.Where(pt => pt.PlaylistId == playlist.Id).ToListAsync();
+            if (playlistTracks.Any())
+            {
+                _context.PlaylistTracks.RemoveRange(playlistTracks);
+            }
+            _context.Playlists.Remove(playlist);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteTrack(Playlist playlist, Track track)
+        {
+            using var _context = _contextFactory.CreateDbContext();
+            PlaylistTrack? _exists = await _context.PlaylistTracks.FirstOrDefaultAsync(pt => pt.TrackId == track.Id && pt.PlaylistId == playlist.Id);
+            if (_exists != null)
+            {
+                _context.PlaylistTracks.Remove(_exists);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task AddTrack(Playlist playlist, Track track)
+        {
+            using var _context = _contextFactory.CreateDbContext();
+            _context.Attach(playlist);
+
+            PlaylistTrack playlistTrack = new()
+            {
+                TrackId = track.Id,
+                PlaylistId = playlist.Id,
+            };
+            playlist.PlaylistTracks.Add(playlistTrack);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task EditName(Playlist playlist, string name)
+        {
+            using var _context = _contextFactory.CreateDbContext();
+            _context.Attach(playlist);
+            playlist.Name = name;
+            await _context.SaveChangesAsync();
+        }
     }
 }
