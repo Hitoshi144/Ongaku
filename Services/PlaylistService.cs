@@ -47,6 +47,12 @@ namespace Ongaku.Services {
             return await _context.Playlists.Include(p => p.PlaylistTracks).ThenInclude(pt => pt.Track).ThenInclude(t => t!.Artist).AsQueryable().ToListAsync();
         }
 
+        public async Task<Playlist?> GetPlaylist(string id)
+        {
+            using var _context = _contextFactory.CreateDbContext();
+            return await _context.Playlists.Include(p => p.PlaylistTracks).ThenInclude(pt => pt.Track).ThenInclude(t => t!.Artist).FirstOrDefaultAsync(pt => pt.Id == Convert.ToInt32(id));
+        }
+
         public async Task DeletePlaylist(Playlist playlist)
         {
             using var _context = _contextFactory.CreateDbContext();

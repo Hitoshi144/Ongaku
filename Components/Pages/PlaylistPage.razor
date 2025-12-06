@@ -1,0 +1,207 @@
+﻿@page "/playlist/{playlistId}"
+
+@using Ongaku.Models
+@inject Ongaku.Services.PlaylistService PlaylistService
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject Ongaku.Services.AudioService AudioService
+@inject ISnackbar Snackbar
+
+<PageTitle>@(playlist != null ? playlist.Name : "Playlist")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
+	<div Class="d-flex flex-row justify-space-between pl-2 pr-2">
+		<MudFab Color="Color.Secondary" @onclick="ToPlaylists" StartIcon="@Icons.Material.Filled.ArrowBack" IconColor="Color.Primary" Size="Size.Medium" />
+		<MudButton @onclick="OpenDialogAsync" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Secondary"
+				   Style="border-radius: 2rem; height: 2rem;">Add</MudButton>
+	</div>
+	<MudText Typo="Typo.h5" Style="font-family: 'Segui'; font-weight: 600; margin-top: 1rem;">Total songs: @(playlist != null ? playlist.PlaylistTracks.Count : "0")</MudText>
+
+	@if (playlist != null)
+	{
+		@if ((playlist.PlaylistTracks == null) || (playlist.PlaylistTracks != null && playlist.PlaylistTracks.Count == 0 && loading))
+		{
+			<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center">
+				<MudProgressCircular Color="Color.Primary" Indeterminate />
+			</div>
+		}
+		else if ((playlist.PlaylistTracks == null) || (playlist.PlaylistTracks != null && playlist.PlaylistTracks.Count == 0))
+		{
+			<div style="position: relative; width: 100%; height: 100%;">
+				<MudText Typo="Typo.h3"
+						 Style="position: absolute; top: 25%; left: 25%; transform: translate(-50%, -50%);
+					                    font-family: 'Segui'; text-align: center;">
+					Nothing found
+				</MudText>
+			</div>
+			<MudImage Src="assets/nothing_found.png"
+					  Style="position: absolute; right: 0; bottom: 0;" />
+		}
+		else if (playlist != null && tracks != null)
+		{
+			<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
+				@foreach (Track track in tracks)
+				{
+					<MudPaper Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+								Style="border-radius: 1rem;"
+								Height="5rem"
+								@onclick="() => Play(track)">
+						<div class="hover-panel d-flex justify-center align-center">
+							<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
+						</div>
+
+						<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
+							<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
+										Width="55" Height="55" ObjectFit="ObjectFit.Cover" />
+
+							<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
+								<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
+								<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
+							</div>
+						</div>
+
+						<div class="d-flex flex-row align-center">
+							<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+							<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
+						</div>
+					</MudPaper>
+				}
+			</MudStack>
+		}
+
+		@if (AudioService.CurrentTrack != null)
+		{
+			<Ongaku.Components.Components.EndHeightSpacer />
+		}
+	}
+</MudContainer>
+
+@code {
+	[Parameter]
+	public required string playlistId { get; set; }
+
+	private Playlist? playlist;
+	private List<Track>? tracks;
+
+	private bool loading = true;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await base.OnAfterRenderAsync(firstRender);
+			playlist = await PlaylistService.GetPlaylist(playlistId);
+
+			if (playlist != null)
+			{
+				tracks = playlist.PlaylistTracks.Select(pt => pt.Track).ToList()!;
+				Console.WriteLine($"найдено треков {tracks.Count}");
+			}
+
+			loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private void ToPlaylists()
+	{
+		Navigation.NavigateTo("playlists");
+	}
+
+	private async Task OpenDialogAsync()
+	{
+		if (playlist == null || tracks == null) return;
+
+		var options = new DialogOptions
+		{
+			CloseOnEscapeKey = true,
+			CloseButton = true,
+			MaxWidth = MaxWidth.Small,
+			FullWidth = true
+		};
+
+		var parameters = new DialogParameters
+		{
+			{"_choiced", tracks},
+			{"showSelected", false},
+		};
+
+		List<Track> tracksShot = new(tracks);
+
+		var dialog = await DialogService.ShowAsync<Dialogs.TracksSelection>(
+			"Select tracks", parameters, options);
+
+		var result = await dialog.Result;
+
+		if (result != null && !result.Canceled && result.Data is List<Track> selectedTracks)
+		{
+			var selectedIds = selectedTracks.Select(t => t.Id).ToHashSet();
+			var currentIds = tracksShot.Select(t => t.Id).ToHashSet();
+
+			var tracksToAdd = selectedTracks
+				.Where(t => !currentIds.Contains(t.Id))
+				.ToList();
+
+			var tracksToRemove = tracksShot
+				.Where(t => !selectedIds.Contains(t.Id))
+				.ToList();
+
+			foreach (var track in tracksToAdd)
+			{
+				await PlaylistService.AddTrack(playlist, track);
+			}
+
+			foreach (var track in tracksToRemove)
+			{
+				await PlaylistService.DeleteTrack(playlist, track);
+			}
+
+			await RefreshPlaylistData();
+
+			if (tracksShot != selectedTracks)
+			{
+				Snackbar.Add("Playlist updated successfully", Severity.Success);
+			}
+		}
+	}
+
+	private async Task RefreshPlaylistData()
+	{
+		loading = true;
+
+		playlist = await PlaylistService.GetPlaylist(playlistId);
+
+		if (playlist != null)
+		{
+			tracks = playlist.PlaylistTracks
+				.Select(pt => pt.Track)
+				.Where(t => t != null)
+				.ToList()!;
+		}
+
+		loading = false;
+		StateHasChanged();
+	}
+
+	private async Task Play(Track track)
+	{
+		if ( tracks == null)
+		{
+			Snackbar.Add("Playlist is empty!", Severity.Error);
+			return;
+		}
+
+		await AudioService.PlayFromAsync(tracks, track, Enums.QueueSourceEnum.Playlist, playlist!.Id, playlist!.Name);
+	}
+
+	private void DeleteTrack(int id)
+	{
+		if (tracks == null) return;
+
+		string name = tracks.FirstOrDefault(t => t.Id == id)!.Title;
+		tracks = tracks.Where(t => t.Id != id).ToList();
+
+		Snackbar.Add($"{name} successfuly deleted!", Severity.Success);
+		StateHasChanged();
+	}
+}

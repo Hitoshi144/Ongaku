@@ -3,6 +3,7 @@
 @using Ongaku.Models
 @inject IDialogService DialogService
 @inject Ongaku.Services.AudioService AudioService
+@inject NavigationManager Navigation
 
 <PageTitle>Playlists</PageTitle>
 
@@ -108,8 +109,7 @@
 
 	private void OpenPlaylist(Playlist playlist)
 	{
-		// TODO: Переход на страницу плейлиста
-		Console.WriteLine($"Opening playlist: {playlist.Name}");
+		Navigation.NavigateTo($"/playlist/{playlist.Id}");
 	}
 
 	private async Task StartPlaylist(Playlist playlist)
@@ -119,7 +119,7 @@
 			List<Track> tracks = playlist.PlaylistTracks.Select(pt => pt.Track).Where(track => track != null).Cast<Track>().ToList();
 			Track firstTrack = tracks.First();
 
-			await AudioService.PlayFromAsync(tracks, firstTrack, QueueSourceEnum.Playlist);
+			await AudioService.PlayFromAsync(tracks, firstTrack, QueueSourceEnum.Playlist, playlist.Id, playlist.Name);
 		}
 	}
 }

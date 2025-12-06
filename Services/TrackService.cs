@@ -167,7 +167,7 @@ namespace Ongaku.Services {
             try
             {
                 using var _context = _contextFactory.CreateDbContext();
-                Track? targetTrack = await _context.Tracks.SingleOrDefaultAsync(t => t.Id == id);
+                Track? targetTrack = await _context.Tracks.Include(t => t.Artist).SingleOrDefaultAsync(t => t.Id == id);
                 if (targetTrack == null) return;
 
                 File.Delete(Path.Combine(_environment.WebRootPath, targetTrack.FilePath));

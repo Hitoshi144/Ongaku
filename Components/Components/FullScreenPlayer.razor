@@ -246,7 +246,7 @@
 			case QueueSourceEnum.Library:
 				return "БИБЛИОТЕКА";
 			case QueueSourceEnum.Playlist:
-				return "плейлист ...";
+				return $"плейлист {AudioService._currentPlaylistName}";
 			case QueueSourceEnum.Artist:
 				return "артист ...";
 			case QueueSourceEnum.None:

@@ -18,19 +18,21 @@
 			{
 				@foreach (var track in _tracks)
 				{
-					<div class="d-flex flex-row justify-space-between track-card-bg align-center gap-2 track-select-item" style="width: 100%; padding: 1rem !important;">
-						<div class="d-flex flex-row gap-2">
-							<MudCheckBox 
-								Value="@((_choiced != null && _choiced.Any(t => t.Id == track.Id)) || (_selectedTracks != null && _selectedTracks.Any(t => t.Id == track.Id)) ? true : false)" 
-								T="bool" ValueChanged="c => ToggleTrackSelection(c, track)" Size="Size.Large" Color="Color.Secondary" />
+					@if (!showSelected && (_choiced == null || !_choiced.Any(t => t.Id == track.Id)))
+					{
+						<div class="d-flex flex-row justify-space-between track-card-bg align-center gap-2 track-select-item" style="width: 100%; padding: 1rem !important;">
+							<div class="d-flex flex-row gap-2">
+								<MudCheckBox Value="@((_choiced != null && _choiced.Any(t => t.Id == track.Id)) || (_selectedTracks != null && _selectedTracks.Any(t => t.Id == track.Id)) ? true : false)"
+											 T="bool" ValueChanged="c => ToggleTrackSelection(c, track)" Size="Size.Large" Color="Color.Secondary" />
 								<div class="d-flex flex-column" style="width: 20rem; overflow: clip;">
 									<MudText Class="track-title" Style="text-wrap: nowrap;">@track.Title</MudText>
 									<MudText Class="artist-name" Style="text-wrap: nowrap;">@track.Artist.Name</MudText>
 								</div>
-						</div>
+							</div>
 
-						<MudText>@FormateDuration(track.Duration)</MudText>
-					</div>
+							<MudText>@FormateDuration(track.Duration)</MudText>
+						</div>
+					}
 				}
 			}
 		</MudStack>
@@ -62,6 +64,9 @@
 	[Parameter]
 	public List<Track>? _choiced { get; set; }
 
+	[Parameter]
+	public bool showSelected { get; set; } = true;
+
 	private List<Track>? _tracks;
 	private List<Track> _selectedTracks = new();
 	private bool _proccessing = false;
@@ -70,7 +75,7 @@
 	{
 		if (_choiced != null && _choiced.Count > 0)
 		{
-			_selectedTracks = _choiced;
+			_selectedTracks = new(_choiced);
 		}
 
 		_tracks = await TrackService.GetAllTracksAsync();

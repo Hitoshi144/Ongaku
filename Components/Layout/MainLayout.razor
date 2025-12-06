@@ -51,6 +51,7 @@
             PaletteLight = _lightPalette,
             PaletteDark = _darkPalette,
             Typography = _typography,
+            ZIndex = _zindex,
             LayoutProperties = new LayoutProperties()
         };
     }
@@ -116,6 +117,11 @@
         Divider = "#292838",
         OverlayLight = "#1e1e2d80",
     };
+
+    private readonly ZIndex _zindex = new()
+        {
+            Dialog = 99999999,
+        };
 
     private readonly Typography _typography = new()
     {

@@ -15,6 +15,8 @@ namespace Ongaku.Services {
         private int _currentIndex = -1;
         private QueueSourceEnum _queueSource = QueueSourceEnum.None;
         private QueueModeEnum _queueMode = QueueModeEnum.Loop;
+        public string _currentPlaylistName = "";
+        private int _currentPlaylistId = -1;
 
         private Random _random = new Random();
         private bool _isShuffeled = false;
@@ -222,11 +224,22 @@ namespace Ongaku.Services {
         public async Task PlayFromAsync(
             IEnumerable<Track> sourceTracks,
             Track track,
-            QueueSourceEnum source
+            QueueSourceEnum source,
+            int playlistId = -1,
+            string playlistName = ""
             )
         {
-            if (_queueSource == QueueSourceEnum.None || _queueSource != source || sourceTracks != _queue)
+            if (_queueSource == QueueSourceEnum.None 
+                || _queueSource != source 
+                || sourceTracks != _queue 
+                || (_currentPlaylistId != playlistId))
             {
+                if (_currentPlaylistId != playlistId)
+                {
+                    _currentPlaylistId = playlistId;
+                    _currentPlaylistName = playlistName;
+                }
+
                 BuildQueue(sourceTracks, track, source);
             }
             else
