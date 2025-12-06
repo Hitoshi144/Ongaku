@@ -44,7 +44,7 @@ namespace Ongaku.Services {
         public async Task<List<Playlist>> GetAllPlaylistsAsync()
         {
             using var _context = _contextFactory.CreateDbContext();
-            return await _context.Playlists.Include(p => p.PlaylistTracks).AsQueryable().ToListAsync();
+            return await _context.Playlists.Include(p => p.PlaylistTracks).ThenInclude(pt => pt.Track).ThenInclude(t => t!.Artist).AsQueryable().ToListAsync();
         }
 
         public async Task DeletePlaylist(Playlist playlist)

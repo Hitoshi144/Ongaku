@@ -2,25 +2,94 @@
 @inject Ongaku.Services.PlaylistService PlaylistService
 @using Ongaku.Models
 @inject IDialogService DialogService
+@inject Ongaku.Services.AudioService AudioService
 
 <PageTitle>Playlists</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
 	<div class="d-flex flex-row justify-space-between">
-		<MudText>@(_playlists == null ? 0 : _playlists.Count) playlist</MudText>
+		<MudText Typo="Typo.h5" Style="font-weight: 600;">@(_playlists == null ? 0 : _playlists.Count) playlist</MudText>
 		<MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" Color="Color.Secondary" @onclick="OpenCreatePlaylistAsync"
 				   Style="border-radius: 2rem; height: 2rem;">New</MudButton>
 	</div>
+
+	@if (_playlists != null && _playlists.Count > 0)
+	{
+		<div class="playlists-container">
+			@foreach (var playlist in _playlists)
+			{
+				<MudCard Class="playlist-card" @onclick="() => OpenPlaylist(playlist)" Style="cursor: pointer;">
+					<MudCardContent>
+						<div class="playlist-cover-container">
+							<div class="playlist-cover">
+								@{
+									var playlistTracks = playlist.PlaylistTracks.Take(4).ToList();
+									for (int i = 0; i < 4; i++)
+									{
+										if (i < playlistTracks.Count && playlistTracks[i]?.Track != null)
+										{
+											var track = playlistTracks[i].Track;
+											<img class="cover-image"
+											src="@(track != null ? track.CoverPath : "")" alt="" />
+										}
+										else
+										{
+											<div class="empty-cover">
+												<MudIcon Icon="@Icons.Material.Filled.MusicNote" />
+											</div>
+										}
+									}
+								}
+							</div>
+						</div>
+						<div class="d-flex flex-row justify-space-between align-center">
+							<div class="playlist-info mt-3">
+								<MudText Typo="Typo.subtitle1" Class="playlist-name">@playlist.Name</MudText>
+								<MudText Typo="Typo.body2" Class="playlist-track-count">
+									@playlist.PlaylistTracks.Count track@(playlist.PlaylistTracks.Count != 1 ? "s" : "")
+								</MudText>
+							</div>
+
+							<div class="pr-2">
+								<MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Outlined.PlayArrow" Size="Size.Large" @onclick="() => StartPlaylist(playlist)" />
+							</div>
+						</div>
+					</MudCardContent>
+				</MudCard>
+			}
+		</div>
+	}
+	else if ((_playlists == null) || (_playlists != null && _playlists.Count == 0 && _loading))
+	{
+		<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center">
+			<MudProgressCircular Color="Color.Primary" Indeterminate />
+		</div>
+	}
+	else if (_playlists != null && _playlists.Count == 0)
+	{
+		<div class="empty-state">
+			<MudIcon Icon="@Icons.Material.Filled.PlaylistAdd" Size="Size.Large" />
+			<MudText Typo="Typo.h6" Class="mt-3">No playlists yet</MudText>
+			<MudText Typo="Typo.body2" Class="mb-4">Create your first playlist to get started</MudText>
+			<MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary"
+					   @onclick="OpenCreatePlaylistAsync">
+				Create Playlist
+			</MudButton>
+		</div>
+	}
 </MudContainer>
 
 @code {
 	private List<Playlist>? _playlists;
+	private bool _loading = true;
 
 	protected override async Task OnAfterRenderAsync(bool firstrender)
 	{
 		if (firstrender)
 		{
 			_playlists = await PlaylistService.GetAllPlaylistsAsync();
+			_loading = false;
+			StateHasChanged();
 		}
 	}
 
@@ -34,6 +103,23 @@
 		if (result != null && !result.Canceled && result.Data is true)
 		{
 			_playlists = await PlaylistService.GetAllPlaylistsAsync();
+		}
+	}
+
+	private void OpenPlaylist(Playlist playlist)
+	{
+		// TODO: Переход на страницу плейлиста
+		Console.WriteLine($"Opening playlist: {playlist.Name}");
+	}
+
+	private async Task StartPlaylist(Playlist playlist)
+	{
+		if (playlist.PlaylistTracks.Count > 0)
+		{
+			List<Track> tracks = playlist.PlaylistTracks.Select(pt => pt.Track).Where(track => track != null).Cast<Track>().ToList();
+			Track firstTrack = tracks.First();
+
+			await AudioService.PlayFromAsync(tracks, firstTrack, QueueSourceEnum.Playlist);
 		}
 	}
 }
