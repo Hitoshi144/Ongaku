@@ -8,6 +8,7 @@ namespace Ongaku.Services {
         private readonly IWebHostEnvironment _environment;
 
         public Action<Track, int>? OnTrackAdded;
+        public Action<Track, int>? OnTrackDeleted;
 
         public PlaylistService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context)
         {
@@ -76,6 +77,8 @@ namespace Ongaku.Services {
             {
                 _context.PlaylistTracks.Remove(_exists);
                 await _context.SaveChangesAsync();
+
+                OnTrackDeleted?.Invoke(track, playlist.Id);
             }
         }
 

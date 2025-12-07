@@ -10,12 +10,19 @@
 	<MudMenuItem @onclick="PlayTrackNext" Label="Play next" Icon="@Icons.Material.Outlined.QueuePlayNext" />
 	<MudMenuItem @onclick="AddTrackToQueue" Label="Add to queue" Icon="@Icons.Material.Outlined.AddToQueue" />
 	<MudMenuItem @onclick="OpenEditorAsync" Label="Edit" Icon="@Icons.Material.Outlined.Edit" />
+	@if (playlist != null)
+	{
+		<MudMenuItem @onclick="DeleteFromPlaylist" Label="Delete from playlist" Icon="@Icons.Material.Outlined.DeleteSweep" IconColor="Color.Error" />
+	}
 	<MudMenuItem @onclick="OnDeleteClicked" Label="Delete"  Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" />
 </MudMenu>
 
 @code {
 	[Parameter]
 	public required Track track { get; set; }
+
+	[Parameter]
+	public Playlist? playlist { get; set; }
 
 	[Parameter]
 	public EventCallback<int> OnDelete { get; set; }
@@ -77,5 +84,14 @@
 	private void AddTrackToQueue()
 	{
 		AudioService.AddTrackToQueue(track);
+	}
+
+	private async Task DeleteFromPlaylist()
+	{
+		if (playlist != null)
+		{
+			await PlaylistService.DeleteTrack(playlist, track);
+			await OnDelete.InvokeAsync(track.Id);
+		}
 	}
 }

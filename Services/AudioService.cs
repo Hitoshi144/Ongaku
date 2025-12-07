@@ -111,6 +111,7 @@ namespace Ongaku.Services {
             _js = js;
             _playlistService = playlistService;
             _playlistService.OnTrackAdded += HandlePlaylistTrackAdded;
+            _playlistService.OnTrackDeleted += HandlePlaylistTrackDeleted;
 
             _trackService = trackService;
             _trackService.OnTrackDelete += HandleTrackDelete;
@@ -379,6 +380,19 @@ namespace Ongaku.Services {
             if (_queueSource == QueueSourceEnum.Playlist && _currentPlaylistId == playlistId)
             {
                 _queue.Add(track);
+            }
+        }
+
+        private async void HandlePlaylistTrackDeleted(Track track, int playlistId)
+        {
+            if (_queueSource == QueueSourceEnum.Playlist && _currentPlaylistId == playlistId)
+            {
+                if (_currentTrack != null && _currentTrack.Id == track.Id)
+                {
+                    await PlayNextAsync();
+                }
+
+                _queue.Remove(track);
             }
         }
 
