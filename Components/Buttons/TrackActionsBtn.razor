@@ -8,7 +8,7 @@
 <MudMenu Icon="@Icons.Material.Outlined.MoreVert">
 	<MudMenuItem @onclick="OpenAddToPlaylists" Label="Add to playlist" Icon="@Icons.Material.Outlined.PlaylistAdd" />
 	<MudMenuItem @onclick="PlayTrackNext" Label="Play next" Icon="@Icons.Material.Outlined.QueuePlayNext" />
-	<MudMenuItem Label="Add to queue" Icon="@Icons.Material.Outlined.AddToQueue" />
+	<MudMenuItem @onclick="AddTrackToQueue" Label="Add to queue" Icon="@Icons.Material.Outlined.AddToQueue" />
 	<MudMenuItem @onclick="OpenEditorAsync" Label="Edit" Icon="@Icons.Material.Outlined.Edit" />
 	<MudMenuItem @onclick="OnDeleteClicked" Label="Delete"  Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" />
 </MudMenu>
@@ -72,5 +72,10 @@
 	private void PlayTrackNext()
 	{
 		AudioService.AddPlayNext(track);
+	}
+
+	private void AddTrackToQueue()
+	{
+		AudioService.AddTrackToQueue(track);
 	}
 }

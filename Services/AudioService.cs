@@ -412,7 +412,6 @@ namespace Ongaku.Services {
             {
                 if (existingIndex == _currentIndex + 1 && existingIndex < _queue.Count)
                 {
-                    Console.WriteLine($"Track '{track.Title}' is already next in queue");
                     return;
                 }
 
@@ -474,6 +473,23 @@ namespace Ongaku.Services {
             }
 
             OnQueueChanged?.Invoke(_queue);
+        }
+
+        public void AddTrackToQueue(Track track)
+        {
+            if (track == null) return;
+
+            if (!_queue.Any(t => t.Id == track.Id))
+            {
+                _queue.Add(track);
+
+                if (_isShuffeled)
+                {
+                    _originalQueue.Add(track);
+                }
+
+                OnQueueChanged?.Invoke(_queue);
+            }
         }
     }
 }
