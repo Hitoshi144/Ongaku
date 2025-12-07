@@ -1,9 +1,13 @@
 ﻿using Microsoft.JSInterop;
 using Ongaku.Enums;
 using Ongaku.Models;
+using System.Threading.Tasks;
 
 namespace Ongaku.Services {
     public class AudioService {
+        private readonly PlaylistService _playlistService;
+        private readonly TrackService _trackService;
+
         private IJSRuntime _js;
         private IJSObjectReference? _module;
         private Track? _currentTrack;
@@ -102,9 +106,14 @@ namespace Ongaku.Services {
             }
         }
 
-        public AudioService(IJSRuntime js)
+        public AudioService(IJSRuntime js, PlaylistService playlistService, TrackService trackService)
         {
             _js = js;
+            _playlistService = playlistService;
+            _playlistService.OnTrackAdded += HandlePlaylistTrackAdded;
+
+            _trackService = trackService;
+            _trackService.OnTrackDelete += HandleTrackDelete;
         }
 
         public async Task InitAsync()
@@ -362,6 +371,23 @@ namespace Ongaku.Services {
             else
             {
                 ShuffleQueue();
+            }
+        }
+
+        private void HandlePlaylistTrackAdded(Track track, int playlistId)
+        {
+            if (_queueSource == QueueSourceEnum.Playlist && _currentPlaylistId == playlistId)
+            {
+                _queue.Add(track);
+            }
+        }
+
+        private void HandleTrackDelete(Track track)
+        {
+            if (_queue.Contains(track))
+            {
+                _queue.Remove(track);
+                _originalQueue.Remove(track);
             }
         }
     }

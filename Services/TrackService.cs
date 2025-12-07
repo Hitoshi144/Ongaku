@@ -12,6 +12,8 @@ namespace Ongaku.Services {
         private readonly ArtistService _artistService;
         private readonly CoverRandomerService _coverRandomerService;
 
+        public Action<Track>? OnTrackDelete;
+
         public TrackService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context, ArtistService artistService, CoverRandomerService coverRandomerService)
         {
             _environment = env;
@@ -147,7 +149,7 @@ namespace Ongaku.Services {
         public async Task<List<Track>> GetTracksByTitleAsync(string req)
         {
             using var _context = _contextFactory.CreateDbContext();
-            return await _context.Tracks.Where(t => EF.Functions.ILike(t.Title, $"%{req}%")).ToListAsync();
+            return await _context.Tracks.Include(t => t.Artist).Where(t => EF.Functions.ILike(t.Title, $"%{req}%")).ToListAsync();
         }
 
         public async Task<TimeSpan> GetMaxDurationAsync()
@@ -181,6 +183,8 @@ namespace Ongaku.Services {
 
                 _context.Tracks.Remove(targetTrack);
                 await _context.SaveChangesAsync();
+
+                OnTrackDelete?.Invoke(targetTrack);
             }
             catch (Exception ex)
             {

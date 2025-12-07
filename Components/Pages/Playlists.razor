@@ -4,6 +4,7 @@
 @inject IDialogService DialogService
 @inject Ongaku.Services.AudioService AudioService
 @inject NavigationManager Navigation
+@inject Ongaku.Services.TrackService TrackService
 
 <PageTitle>Playlists</PageTitle>
 
@@ -84,6 +85,13 @@
 	private List<Playlist>? _playlists;
 	private bool _loading = true;
 
+	protected override Task OnInitializedAsync()
+	{
+		TrackService.OnTrackDelete += HandleTrackDelete;
+
+		return base.OnInitializedAsync();
+	}
+
 	protected override async Task OnAfterRenderAsync(bool firstrender)
 	{
 		if (firstrender)
@@ -121,5 +129,13 @@
 
 			await AudioService.PlayFromAsync(tracks, firstTrack, QueueSourceEnum.Playlist, playlist.Id, playlist.Name);
 		}
+	}
+
+	private async void HandleTrackDelete(Track track)
+	{
+		_loading = true;
+		_playlists = await PlaylistService.GetAllPlaylistsAsync();
+		_loading = false;
+		StateHasChanged();
 	}
 }

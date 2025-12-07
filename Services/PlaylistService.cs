@@ -7,6 +7,8 @@ namespace Ongaku.Services {
         private readonly IDbContextFactory<OngakuContext> _contextFactory;
         private readonly IWebHostEnvironment _environment;
 
+        public Action<Track, int>? OnTrackAdded;
+
         public PlaylistService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context)
         {
             _contextFactory = context;
@@ -89,6 +91,7 @@ namespace Ongaku.Services {
             };
             playlist.PlaylistTracks.Add(playlistTrack);
             await _context.SaveChangesAsync();
+            OnTrackAdded?.Invoke(track, playlist.Id);
         }
 
         public async Task EditName(Playlist playlist, string name)

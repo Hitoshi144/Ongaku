@@ -1,5 +1,6 @@
 ﻿@inject Ongaku.Services.AudioService AudioService
 @inject Ongaku.Services.ViewportService ViewportService
+@inject Ongaku.Services.TrackService TrackService
 @using Ongaku.Models
 @inject ISnackbar Snackbar
 @inject IDialogService Dialog
@@ -87,6 +88,8 @@
 		Action<bool> handleLoadingChanged = HandleLoadingChanged;
 		AudioService.OnLoadingStateChanged += handleLoadingChanged;
 
+		TrackService.OnTrackDelete += HandleTrackDelete;
+
 		ViewportService.OnResize += HandleResize;
 	}
 
@@ -155,5 +158,15 @@
 	{
 		_playerOpened = !_playerOpened;
 		InvokeAsync(StateHasChanged);
+	}
+
+	private async void HandleTrackDelete(Track track)
+	{
+		if (_track?.Id == track.Id)
+		{
+			await AudioService.PlayNextAsync();
+		}
+
+		StateHasChanged();
 	}
 }

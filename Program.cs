@@ -24,6 +24,11 @@ builder.Services.AddScoped<AudioService>();
 builder.Services.AddScoped<ViewportService>();
 builder.Services.AddScoped<PlaylistService>();
 
+builder.Services.AddMudServices(config =>
+{
+    config.PopoverOptions.ThrowOnDuplicateProvider = false;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

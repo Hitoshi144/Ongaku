@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject IDialogService DialogService
 @inject Ongaku.Services.AudioService AudioService
+@inject Ongaku.Services.TrackService TrackService
 @inject ISnackbar Snackbar
 
 <PageTitle>@(playlist != null ? playlist.Name : "Playlist")</PageTitle>
@@ -85,6 +86,11 @@
 
 	private bool loading = true;
 
+	protected override void OnInitialized()
+	{
+		TrackService.OnTrackDelete += HandleTrackDelete;
+	}
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
@@ -95,7 +101,6 @@
 			if (playlist != null)
 			{
 				tracks = playlist.PlaylistTracks.Select(pt => pt.Track).ToList()!;
-				Console.WriteLine($"найдено треков {tracks.Count}");
 			}
 
 			loading = false;
@@ -202,6 +207,21 @@
 		tracks = tracks.Where(t => t.Id != id).ToList();
 
 		Snackbar.Add($"{name} successfuly deleted!", Severity.Success);
+		StateHasChanged();
+	}
+
+	private async void HandleTrackDelete(Track track)
+	{
+		if (tracks == null) return;
+
+		loading = true;
+		playlist = await PlaylistService.GetPlaylist(playlistId);
+
+		if (playlist != null)
+		{
+			tracks = playlist.PlaylistTracks.Select(pt => pt.Track).ToList()!;
+		}
+		loading = false;
 		StateHasChanged();
 	}
 }
