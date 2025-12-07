@@ -390,5 +390,90 @@ namespace Ongaku.Services {
                 _originalQueue.Remove(track);
             }
         }
+
+        public void AddPlayNext(Track track)
+        {
+            if (track == null) return;
+
+            bool trackExists = false;
+            int existingIndex = -1;
+
+            for (int i = 0; i < _queue.Count; i++)
+            {
+                if (_queue[i].Id == track.Id)
+                {
+                    trackExists = true;
+                    existingIndex = i;
+                    break;
+                }
+            }
+
+            if (trackExists)
+            {
+                if (existingIndex == _currentIndex + 1 && existingIndex < _queue.Count)
+                {
+                    Console.WriteLine($"Track '{track.Title}' is already next in queue");
+                    return;
+                }
+
+                _queue.RemoveAt(existingIndex);
+
+                if (existingIndex < _currentIndex)
+                {
+                    _currentIndex--;
+                }
+            }
+
+            int insertPosition;
+            if (_queue.Count == 0)
+            {
+                insertPosition = 0;
+                _currentIndex = -1;
+            }
+            else if (_currentIndex >= 0 && _currentIndex < _queue.Count)
+            {
+                insertPosition = _currentIndex + 1;
+            }
+            else
+            {
+                insertPosition = _queue.Count;
+            }
+
+            _queue.Insert(insertPosition, track);
+
+            if (_isShuffeled && _originalQueue.Count > 0)
+            {
+                if (trackExists)
+                {
+                    int originalIndex = _originalQueue.FindIndex(t => t.Id == track.Id);
+                    if (originalIndex >= 0)
+                    {
+                        _originalQueue.RemoveAt(originalIndex);
+                    }
+                }
+
+                int currentInOriginalIndex = -1;
+                if (_currentTrack != null)
+                {
+                    currentInOriginalIndex = _originalQueue.FindIndex(t => t.Id == _currentTrack.Id);
+                }
+
+                if (currentInOriginalIndex >= 0)
+                {
+                    _originalQueue.Insert(currentInOriginalIndex + 1, track);
+                }
+                else
+                {
+                    _originalQueue.Add(track);
+                }
+            }
+
+            else if (_isShuffeled && !trackExists)
+            {
+                _originalQueue.Add(track);
+            }
+
+            OnQueueChanged?.Invoke(_queue);
+        }
     }
 }
