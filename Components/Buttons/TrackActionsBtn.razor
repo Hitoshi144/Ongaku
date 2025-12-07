@@ -1,9 +1,11 @@
 ﻿@inject Ongaku.Services.TrackService TrackService
+@inject Ongaku.Services.PlaylistService PlaylistService
 @inject IDialogService DialogService
 @using Ongaku.Models
+@inject ISnackbar SnackBar
 
 <MudMenu Icon="@Icons.Material.Outlined.MoreVert">
-	<MudMenuItem Label="Add to playlist" Icon="@Icons.Material.Outlined.PlaylistAdd" />
+	<MudMenuItem @onclick="OpenAddToPlaylists" Label="Add to playlist" Icon="@Icons.Material.Outlined.PlaylistAdd" />
 	<MudMenuItem Label="Play next" Icon="@Icons.Material.Outlined.QueuePlayNext" />
 	<MudMenuItem Label="Add to queue" Icon="@Icons.Material.Outlined.AddToQueue" />
 	<MudMenuItem @onclick="OpenEditorAsync" Label="Edit" Icon="@Icons.Material.Outlined.Edit" />
@@ -41,6 +43,28 @@
 		if (result != null && !result.Canceled && result.Data is true)
 		{
 			await OnEdit.InvokeAsync();
+		}
+	}
+
+	private async Task OpenAddToPlaylists()
+	{
+		var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+		var parameters = new DialogParameters
+		{
+			{"_track", track},
+		};
+
+		var dialog = await DialogService.ShowAsync<Dialogs.PlaylistsSelection>("Playlists selection", parameters, options);
+		var result = await dialog.Result;
+
+		if (result != null && !result.Canceled && result.Data is List<Playlist> playlists)
+		{
+			foreach (var pl in playlists)
+			{
+				await PlaylistService.AddTrack(pl, track);
+			}
+
+			SnackBar.Add("Track added to playlist", Severity.Success);
 		}
 	}
 

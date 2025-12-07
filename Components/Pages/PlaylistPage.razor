@@ -6,6 +6,7 @@
 @inject IDialogService DialogService
 @inject Ongaku.Services.AudioService AudioService
 @inject Ongaku.Services.TrackService TrackService
+@inject Ongaku.Services.PlaylistService PlaylistService
 @inject ISnackbar Snackbar
 
 <PageTitle>@(playlist != null ? playlist.Name : "Playlist")</PageTitle>
@@ -89,6 +90,7 @@
 	protected override void OnInitialized()
 	{
 		TrackService.OnTrackDelete += HandleTrackDelete;
+		PlaylistService.OnTrackAdded += HandleTrackAdd;
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -214,14 +216,15 @@
 	{
 		if (tracks == null) return;
 
-		loading = true;
-		playlist = await PlaylistService.GetPlaylist(playlistId);
+		await RefreshPlaylistData();
+		StateHasChanged();
+	}
 
-		if (playlist != null)
-		{
-			tracks = playlist.PlaylistTracks.Select(pt => pt.Track).ToList()!;
-		}
-		loading = false;
+	private async void HandleTrackAdd(Track track, int _playlistId)
+	{
+		if (playlistId != _playlistId.ToString()) return;
+
+		await RefreshPlaylistData();
 		StateHasChanged();
 	}
 }

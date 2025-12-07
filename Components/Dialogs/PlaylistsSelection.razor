@@ -1,0 +1,104 @@
+﻿@using Ongaku.Models
+@inject Ongaku.Services.PlaylistService PlaylistService
+
+<MudDialog>
+	<TitleContent>Select playlists</TitleContent>
+
+	<DialogContent>
+		<MudStack Style="width: 100%;" Class="d-flex flex-column gap-4 align-center">
+			@if (_playlists == null)
+			{
+				<MudProgressCircular Color="Color.Primary" Indeterminate />
+			}
+			else if (_playlists.Count == 0)
+			{
+				<MudText>No playlists :(</MudText>
+			}
+			else
+			{
+				@foreach (var playlist in _playlists)
+				{
+					<div class="d-flex flex-row justify-space-between track-card-bg align-center gap-2 track-select-item" style="width: 100%; padding: 1rem !important;">
+						<div class="d-flex flex-row gap-2">
+							<MudCheckBox 
+											T="bool" ValueChanged="c => ToggleTrackSelection(c, playlist)" Size="Size.Large" Color="Color.Secondary" />
+							<div class="d-flex flex-column" style="width: 20rem; overflow: clip;">
+								<MudText Class="track-title" Style="text-wrap: nowrap;">@playlist.Name</MudText>
+								<MudText Class="artist-name" Style="text-wrap: nowrap;">@playlist.PlaylistTracks.Count tracks</MudText>
+							</div>
+						</div>
+					</div>
+				}
+			}
+		</MudStack>
+	</DialogContent>
+
+	<DialogActions>
+		<MudToolBar Gutters="true" Class="relative d-flex justify-end gap-4">
+			<MudButton Color="Color.Secondary" Variant="Variant.Filled" @onclick="SubmitSelected">
+				@if (_proccessing)
+				{
+					<MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+					<MudText Class="ms-2">Processing</MudText>
+				}
+				else
+				{
+					<MudText>
+						Submit
+					</MudText>
+				}
+			</MudButton>
+		</MudToolBar>
+	</DialogActions>
+</MudDialog>
+
+@code {
+	[CascadingParameter]
+	private IMudDialogInstance? MudDialog { get; set; }
+
+	[Parameter]
+	public required Track _track { get; set; }
+
+	private List<Playlist>? _playlists;
+	private List<Playlist> _selectedPlaylists = new();
+	private bool _proccessing = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		_playlists = (await PlaylistService.GetAllPlaylistsAsync()).Where(pl => !pl.PlaylistTracks.Select(pt => pt.TrackId).Contains(_track.Id)).ToList();
+
+		await base.OnInitializedAsync();
+	}
+
+	private void ToggleTrackSelection(bool state, Playlist playlist)
+	{
+		if (state)
+		{
+			_selectedPlaylists.Add(playlist);
+		}
+		else
+		{
+			_selectedPlaylists.Remove(playlist);
+		}
+		StateHasChanged();
+	}
+
+	private string FormateDuration(TimeSpan duration)
+	{
+		if (duration.Hours > 0)
+		{
+			return $"{duration.Hours}:{duration.Minutes:D2}:{duration.Seconds:D2}";
+
+		}
+		else
+		{
+			return $"{duration.Minutes:D2}:{duration.Seconds:D2}";
+		}
+	}
+
+	private void SubmitSelected()
+	{
+		_proccessing = true;
+		MudDialog!.Close(DialogResult.Ok(_selectedPlaylists));
+	}
+}

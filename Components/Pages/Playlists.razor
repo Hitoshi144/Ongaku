@@ -88,6 +88,7 @@
 	protected override Task OnInitializedAsync()
 	{
 		TrackService.OnTrackDelete += HandleTrackDelete;
+		PlaylistService.OnTrackAdded += HandleTrackAdd;
 
 		return base.OnInitializedAsync();
 	}
@@ -132,6 +133,14 @@
 	}
 
 	private async void HandleTrackDelete(Track track)
+	{
+		_loading = true;
+		_playlists = await PlaylistService.GetAllPlaylistsAsync();
+		_loading = false;
+		StateHasChanged();
+	}
+
+	private async void HandleTrackAdd(Track track, int _playlistId)
 	{
 		_loading = true;
 		_playlists = await PlaylistService.GetAllPlaylistsAsync();
