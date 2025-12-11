@@ -9,6 +9,8 @@ namespace Ongaku.Services {
 
         public Action<Track, int>? OnTrackAdded;
         public Action<Track, int>? OnTrackDeleted;
+        public Action<int>? OnPlaylistDeleted;
+        public Action<int, string>? OnEditName;
 
         public PlaylistService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context)
         {
@@ -65,6 +67,8 @@ namespace Ongaku.Services {
                 _context.PlaylistTracks.RemoveRange(playlistTracks);
             }
             _context.Playlists.Remove(playlist);
+         
+            OnPlaylistDeleted?.Invoke(playlist.Id);
 
             await _context.SaveChangesAsync();
         }
@@ -102,6 +106,9 @@ namespace Ongaku.Services {
             using var _context = _contextFactory.CreateDbContext();
             _context.Attach(playlist);
             playlist.Name = name;
+
+            OnEditName?.Invoke(playlist.Id, name);
+
             await _context.SaveChangesAsync();
         }
     }

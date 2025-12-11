@@ -13,11 +13,26 @@
 
 <MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
 	<div Class="d-flex flex-row justify-space-between pl-2 pr-2">
-		<MudFab Color="Color.Secondary" @onclick="ToPlaylists" StartIcon="@Icons.Material.Filled.ArrowBack" IconColor="Color.Primary" Size="Size.Medium" />
-		<MudButton @onclick="OpenDialogAsync" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Secondary"
-				   Style="border-radius: 2rem; height: 2rem;">Add</MudButton>
+		<div class="d-flex flex-row gap-4 align-center">
+			<MudFab Color="Color.Secondary" @onclick="ToPlaylists" StartIcon="@Icons.Material.Filled.ArrowBack" IconColor="Color.Primary" Size="Size.Medium" />
+
+			<div class="d-flex flex-row gap-2">
+				<MudText Typo="Typo.h4" Color="Color.Secondary" Style="font-weight: 600;">@playlist?.Name</MudText>
+				<MudIconButton Color="Color.Secondary" Icon="@Icons.Material.Outlined.Edit"
+				Size="Size.Small" @onclick="OpenEditNameDialog"
+				/>
+			</div>
+		</div>
+		<MudButton @onclick="OpenDeletePlaylistDialog"
+			Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.DeleteForever" Color="Color.Error"
+			Style="border-radius: 2rem; height: 2rem; margin-top: 1rem;"
+		>Delete playlist</MudButton>
 	</div>
-	<MudText Typo="Typo.h5" Style="font-family: 'Segui'; font-weight: 600; margin-top: 1rem;">Total songs: @(playlist != null ? playlist.PlaylistTracks.Count : "0")</MudText>
+	<div Class="d-flex flex-row justify-space-between pl-2 pr-2">
+		<MudText Typo="Typo.h5" Style="font-family: 'Segui'; font-weight: 600; margin-top: 1rem;">Total songs: @(playlist != null ? playlist.PlaylistTracks.Count : "0")</MudText>
+		<MudButton @onclick="OpenDialogAsync" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Secondary"
+				   Style="border-radius: 2rem; height: 2rem; margin-top: 1rem;">Add</MudButton>
+	</div>
 
 	@if (playlist != null)
 	{
@@ -231,5 +246,64 @@
 
 		await RefreshPlaylistData();
 		StateHasChanged();
+	}
+
+	private async void OpenDeletePlaylistDialog()
+	{
+		if (playlist == null || tracks == null) return;
+
+		var options = new DialogOptions
+		{
+			CloseOnEscapeKey = true,
+			CloseButton = true,
+			MaxWidth = MaxWidth.Small,
+			FullWidth = true
+		};
+
+		var parameters = new DialogParameters
+		{
+			{"playlist", playlist},
+		};
+
+		var dialog = await DialogService.ShowAsync<Dialogs.DeletePlaylist>(
+			"Delete playlist", parameters, options);
+
+		var result = await dialog.Result;
+
+		if (result != null && !result.Canceled)
+		{
+			StateHasChanged();
+			Navigation.NavigateTo("/playlists");
+			Snackbar.Add("Playlist deleted", Severity.Success);
+		}
+	}
+
+	public async void OpenEditNameDialog()
+	{
+		if (playlist == null || tracks == null) return;
+
+		var options = new DialogOptions
+		{
+			CloseOnEscapeKey = true,
+			CloseButton = true,
+			MaxWidth = MaxWidth.Small,
+			FullWidth = true
+		};
+
+		var parameters = new DialogParameters
+		{
+			{"playlist", playlist},
+		};
+
+		var dialog = await DialogService.ShowAsync<Dialogs.EditPlaylistName>(
+			"Edit playlist name", parameters, options);
+
+		var result = await dialog.Result;
+
+		if (result != null && !result.Canceled)
+		{
+			await RefreshPlaylistData();
+			StateHasChanged();
+		}
 	}
 }

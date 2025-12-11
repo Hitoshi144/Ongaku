@@ -18,7 +18,7 @@
 			{
 				@foreach (var track in _tracks)
 				{
-					@if (!showSelected && (_choiced == null || !_choiced.Any(t => t.Id == track.Id)))
+					@if (!showSelected && (_choiced == null || !_choiced.Any(t => t.Id == track.Id)) || showSelected)
 					{
 						<div class="d-flex flex-row justify-space-between track-card-bg align-center gap-2 track-select-item" style="width: 100%; padding: 1rem !important;">
 							<div class="d-flex flex-row gap-2">

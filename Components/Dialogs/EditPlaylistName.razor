@@ -1,0 +1,64 @@
+﻿@using Ongaku.Models
+@inject IDialogService DialogService
+@inject Ongaku.Services.PlaylistService PlaylistService
+
+<MudDialog>
+	<TitleContent>Edit name</TitleContent>
+
+	<DialogContent>
+		<MudStack Style="width: 100%;" Class="d-flex flex-column gap-4 align-center">
+			<MudTextField Style="width: 80%; min-width: 20rem;" Label="Title" @bind-Value="@_name" Variant="Variant.Outlined" />
+		</MudStack>
+	</DialogContent>
+
+	<DialogActions>
+		<MudToolBar Gutters="false" Class="relative d-flex justify-end gap-4">
+			<MudButton Color="Color.Secondary" Disabled="@_proccessing"
+					   Variant="Variant.Filled" @onclick="EditName">
+				@if (_proccessing)
+				{
+					<MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate />
+					<MudText Class="ms-2">Proccessing</MudText>
+				}
+				else
+				{
+					<MudText>Submit</MudText>
+				}
+			</MudButton>
+			<MudButton Color="Color.Error" Variant="Variant.Filled" @onclick="Cancel">
+				Cancel
+			</MudButton>
+		</MudToolBar>
+	</DialogActions>
+</MudDialog>
+
+@code {
+	[CascadingParameter]
+	private IMudDialogInstance? MudDialog { get; set; }
+
+	[Parameter]
+	public required Playlist playlist { get; set; }
+
+	private string _name = "";
+
+	protected override Task OnInitializedAsync()
+	{
+		_name = playlist.Name;
+
+		return base.OnInitializedAsync();
+	}
+
+	private bool _proccessing = false;
+
+	private void Cancel()
+	{
+		MudDialog!.Close(DialogResult.Cancel());
+	}
+
+	private async Task EditName()
+	{
+		await PlaylistService.EditName(playlist, _name);
+
+		MudDialog!.Close(DialogResult.Ok(true));
+	}
+}

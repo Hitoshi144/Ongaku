@@ -93,7 +93,7 @@
 		ViewportService.OnResize += HandleResize;
 	}
 
-	private void HandleTrackChanged(Track track)
+	private void HandleTrackChanged(Track? track)
 	{
 		_track = track;
 		InvokeAsync(StateHasChanged);

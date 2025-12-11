@@ -112,6 +112,8 @@ namespace Ongaku.Services {
             _playlistService = playlistService;
             _playlistService.OnTrackAdded += HandlePlaylistTrackAdded;
             _playlistService.OnTrackDeleted += HandlePlaylistTrackDeleted;
+            _playlistService.OnPlaylistDeleted += HandlePlaylistDelete;
+            _playlistService.OnEditName += HandlePlaylistNameUpdate;
 
             _trackService = trackService;
             _trackService.OnTrackDelete += HandleTrackDelete;
@@ -504,6 +506,34 @@ namespace Ongaku.Services {
 
                 OnQueueChanged?.Invoke(_queue);
             }
+        }
+
+        public async Task ClearState()
+        {
+            _queue.Clear();
+            _isShuffeled = false;
+            _originalQueue.Clear();
+            _currentTrack = null;
+            _currentPlaylistId = -1;
+            _currentPlaylistName = "";
+            _queueMode = QueueModeEnum.Loop;
+            _queueSource = QueueSourceEnum.None;
+            await PauseAsync();
+            StopTimer();
+            OnTrackChanged?.Invoke(null);
+        }
+
+        private async void HandlePlaylistDelete(int id)
+        {
+            if (_currentPlaylistId == id)
+            {
+                await ClearState();
+            }
+        }
+
+        private void HandlePlaylistNameUpdate(int id, string name)
+        {
+            if (_currentPlaylistId == id) _currentPlaylistName = name;
         }
     }
 }
