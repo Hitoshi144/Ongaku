@@ -13,6 +13,7 @@ namespace Ongaku.Services {
         private readonly CoverRandomerService _coverRandomerService;
 
         public Action<Track>? OnTrackDelete;
+        public Action<Track>? OnTrackAdd;
 
         public TrackService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context, ArtistService artistService, CoverRandomerService coverRandomerService)
         {
@@ -84,19 +85,41 @@ namespace Ongaku.Services {
             }
 
             var filemetadata = TagLib.File.Create(filePath);
+            var performer = filemetadata.Tag.FirstPerformer;
 
-            Artist? existArtist = await _artistService.GetArtistByName(filemetadata.Tag.FirstPerformer);
+            Artist? existArtist;
 
-            if (existArtist == null)
+            if (!string.IsNullOrEmpty(performer))
             {
-                var artistName = filemetadata.Tag.FirstPerformer;
+                existArtist = await _context.Artists
+                    .FirstOrDefaultAsync(a => EF.Functions.ILike(a.Name, performer));
 
-                if (string.IsNullOrEmpty(artistName))
+                if (existArtist == null)
                 {
-                    artistName = "Pear Teto";
+                    existArtist = new Artist
+                    {
+                        Name = performer,
+                        Avatar = "assets/teto_cover.png"
+                    };
+                    _context.Artists.Add(existArtist);
+                    await _context.SaveChangesAsync();
                 }
+            }
+            else
+            {
+                existArtist = await _context.Artists
+                    .FirstOrDefaultAsync(a => EF.Functions.ILike(a.Name, "Pear Teto"));
 
-                existArtist = await _artistService.AddArtistAsync(artistName);
+                if (existArtist == null)
+                {
+                    existArtist = new Artist
+                    {
+                        Name = "Pear Teto",
+                        Avatar = "assets/teto_cover.png"
+                    };
+                    _context.Artists.Add(existArtist);
+                    await _context.SaveChangesAsync();
+                }
             }
 
             var duration = filemetadata.Properties.Duration;
@@ -130,6 +153,7 @@ namespace Ongaku.Services {
                 dbTitle += titleParts[i];
             }
 
+            Console.WriteLine("Создаю объект трека");
                 var track = new Track
                 {
                     Title = dbTitle,
@@ -140,10 +164,15 @@ namespace Ongaku.Services {
                     CoverPath = coverPath
                 };
 
+            Console.WriteLine("привязываю трек к артисту");
             existArtist.Tracks.Add(track);
 
+
+            Console.WriteLine("Добавляю трек");
             _context.Tracks.Add(track);
+            Console.WriteLine("Сохраняю изменения");
             await _context.SaveChangesAsync();
+            OnTrackAdd?.Invoke(track);
         }
 
         public async Task<List<Track>> GetTracksByTitleAsync(string req)
@@ -254,6 +283,7 @@ namespace Ongaku.Services {
             }
 
             await _context.SaveChangesAsync();
+            OnTrackAdd?.Invoke(track);
         }
     }
 }

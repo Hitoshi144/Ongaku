@@ -79,6 +79,11 @@
 			</MudButton>
 		</div>
 	}
+
+	@if (AudioService.CurrentTrack != null)
+	{
+		<Ongaku.Components.Components.EndHeightSpacer />
+	}
 </MudContainer>
 
 @code {

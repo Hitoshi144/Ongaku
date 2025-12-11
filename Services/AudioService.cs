@@ -238,7 +238,9 @@ namespace Ongaku.Services {
             Track track,
             QueueSourceEnum source,
             int playlistId = -1,
-            string playlistName = ""
+            string playlistName = "",
+            int artistId = -1,
+            string artistName = ""
             )
         {
             if (_queueSource == QueueSourceEnum.None 

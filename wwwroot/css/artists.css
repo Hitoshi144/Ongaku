@@ -1,0 +1,9 @@
+﻿.artist-avatar {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+}

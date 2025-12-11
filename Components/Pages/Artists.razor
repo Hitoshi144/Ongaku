@@ -1,0 +1,124 @@
+﻿@page "/artists"
+@using Ongaku.Models
+@inject Ongaku.Services.AudioService AudioService
+@inject NavigationManager Navigation
+@inject Ongaku.Services.TrackService TrackService
+@inject Ongaku.Services.ArtistService ArtistService
+
+<PageTitle>Artists</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
+	<MudText Typo="Typo.h5" Style="font-weight: 600;">@(_artists == null ? 0 : _artists.Count) artist</MudText>
+
+	@if (_artists != null && _artists.Count > 0)
+	{
+		<div class="playlists-container">
+			@foreach (var artist in _artists)
+			{
+				<MudCard Class="playlist-card" @onclick="() => OpenArtist(artist)" Style="cursor: pointer;">
+					<MudCardContent>
+						<div class="playlist-cover-container">
+							<div class="artist-avatar">
+									<img class="cover-image"
+											src="@(artist != null ? artist.Avatar : "")" alt="" />
+							</div>
+						</div>
+						<div class="d-flex flex-row justify-space-between align-center">
+							<div class="playlist-info mt-3">
+								<MudText Typo="Typo.subtitle1" Class="playlist-name">@artist!.Name</MudText>
+								<MudText Typo="Typo.body2" Class="playlist-track-count">
+									@artist!.Tracks.Count track@(artist.Tracks.Count != 1 ? "s" : "")
+								</MudText>
+							</div>
+
+							<div class="pr-2">
+								<MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Outlined.PlayArrow" Size="Size.Large" @onclick="() => StartArtist(artist!)" />
+							</div>
+						</div>
+					</MudCardContent>
+				</MudCard>
+			}
+		</div>
+	}
+	else if ((_artists == null) || (_artists != null && _artists.Count == 0 && _loading))
+	{
+		<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center">
+			<MudProgressCircular Color="Color.Primary" Indeterminate />
+		</div>
+	}
+	else if (_artists != null && _artists.Count == 0)
+	{
+		<div class="empty-state">
+			<MudText Typo="Typo.h6" Class="mt-3">No artists yet :(</MudText>
+		</div>
+	}
+
+	@if (AudioService.CurrentTrack != null)
+	{
+		<Ongaku.Components.Components.EndHeightSpacer />
+	}
+</MudContainer>
+
+@code {
+	private List<Artist>? _artists;
+	private bool _loading = true;
+
+	protected override Task OnInitializedAsync()
+	{
+		TrackService.OnTrackDelete += HandleTrackDelete;
+		TrackService.OnTrackAdd += HandleTrackAdd;
+		ArtistService.OnArtistEdit += HandleArtistEdit;
+
+		return base.OnInitializedAsync();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstrender)
+	{
+		if (firstrender)
+		{
+			_artists = await ArtistService.GetAllArtists();
+			_loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private void OpenArtist(Artist artist)
+	{
+		Navigation.NavigateTo($"/artist/{artist.Id}");
+	}
+
+	private async Task StartArtist(Artist artist)
+	{
+		if (artist.Tracks.Count > 0)
+		{
+			List<Track> tracks = artist.Tracks.Where(track => track != null).Cast<Track>().ToList();
+			Track firstTrack = tracks.First();
+
+			await AudioService.PlayFromAsync(tracks, firstTrack, QueueSourceEnum.Artist, artistId: artist.Id, artistName: artist.Name);
+		}
+	}
+
+	private async void HandleTrackDelete(Track track)
+	{
+		_loading = true;
+		_artists = await ArtistService.GetAllArtists();
+		_loading = false;
+		StateHasChanged();
+	}
+
+	private async void HandleTrackAdd(Track track)
+	{
+		_loading = true;
+		_artists = await ArtistService.GetAllArtists();
+		_loading = false;
+		StateHasChanged();
+	}
+
+	private async void HandleArtistEdit()
+	{
+		_loading = true;
+		_artists = await ArtistService.GetAllArtists();
+		_loading = false;
+		StateHasChanged();
+	}
+}

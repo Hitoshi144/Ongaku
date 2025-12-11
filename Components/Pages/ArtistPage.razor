@@ -1,0 +1,208 @@
+﻿@page "/artist/{artistId}"
+
+@using Ongaku.Models
+@inject NavigationManager Navigation
+@inject Ongaku.Services.AudioService AudioService
+@inject Ongaku.Services.TrackService TrackService
+@inject Ongaku.Services.ArtistService ArtistService
+@inject ISnackbar Snackbar
+
+<PageTitle>@(artist != null ? artist.Name : "Artist")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="height: 100%;">
+	<div Class="d-flex flex-row justify-space-between pl-2 pr-2 align-start">
+		<div class="d-flex flex-column gap-4">
+			<MudFab Color="Color.Secondary" @onclick="ToArtists" StartIcon="@Icons.Material.Filled.ArrowBack" IconColor="Color.Primary" Size="Size.Medium" />
+			<MudText Typo="Typo.h5" Style="font-family: 'Segui'; font-weight: 600; margin-top: 1rem;">Total songs: @(artist != null ? artist.Tracks.Count : "0")</MudText>
+		</div>
+
+		<div class="d-flex flex-column align-end gap-3">
+			<MudFileUpload T="IBrowserFile"
+						   FilesChanged="EditAvatar"
+						   Accept=".png, .jpg, .webp, .jpeg">
+				<ActivatorContent>
+					<div class="d-flex flex-column gap-2">
+						<MudImage Width="300" Height="300" Class="rounded-lg interactive-border" ObjectFit="ObjectFit.Cover"
+								  Src="@artist?.Avatar" FallbackSrc="assets/teto_cover.png" />
+					</div>
+				</ActivatorContent>
+			</MudFileUpload>
+			<MudText Typo="Typo.h4" Color="Color.Secondary" Style="font-weight: 600;">@artist?.Name</MudText>
+		</div>
+	</div>
+
+	@if (artist != null)
+	{
+		@if ((artist.Tracks == null) || (artist.Tracks != null && artist.Tracks.Count == 0 && loading))
+		{
+			<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center">
+				<MudProgressCircular Color="Color.Primary" Indeterminate />
+			</div>
+		}
+		else if ((artist.Tracks == null) || (artist.Tracks != null && artist.Tracks.Count == 0))
+		{
+			<div style="position: relative; width: 100%; height: 100%;">
+				<MudText Typo="Typo.h3"
+						 Style="position: absolute; top: 25%; left: 25%; transform: translate(-50%, -50%);
+							                    font-family: 'Segui'; text-align: center;">
+					Nothing found
+				</MudText>
+			</div>
+			<MudImage Src="assets/nothing_found.png"
+					  Style="position: absolute; right: 0; bottom: 0;" />
+		}
+		else if (artist != null && tracks != null)
+		{
+			<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
+				@foreach (Track track in tracks)
+				{
+					<MudPaper Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+							  Style="border-radius: 1rem;"
+							  Height="5rem"
+							  @onclick="() => Play(track)">
+						<div class="hover-panel d-flex justify-center align-center">
+							<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
+						</div>
+
+						<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
+							<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
+									  Width="55" Height="55" ObjectFit="ObjectFit.Cover" />
+
+							<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
+								<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
+								<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
+							</div>
+						</div>
+
+						<div class="d-flex flex-row align-center">
+							<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+							<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
+						</div>
+					</MudPaper>
+				}
+			</MudStack>
+		}
+
+		@if (AudioService.CurrentTrack != null)
+		{
+			<Ongaku.Components.Components.EndHeightSpacer />
+		}
+	}
+</MudContainer>
+
+@code {
+	[Parameter]
+	public required string artistId { get; set; }
+
+	private Artist? artist;
+	private List<Track>? tracks;
+
+	private bool loading = true;
+
+	protected override void OnInitialized()
+	{
+		TrackService.OnTrackDelete += HandleTrackDelete;
+		TrackService.OnTrackAdd += HandleTrackAdd;
+		ArtistService.OnArtistEdit += HandleArtistEdit;
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await base.OnAfterRenderAsync(firstRender);
+			artist = await ArtistService.GetArtistById(artistId);
+
+			if (artist != null)
+			{
+				tracks = artist.Tracks.ToList()!;
+			}
+
+			loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private void ToArtists()
+	{
+		Navigation.NavigateTo("artists");
+	}
+
+	private async Task RefreshArtistData()
+	{
+		loading = true;
+
+		artist = await ArtistService.GetArtistById(artistId);
+
+		if (artist != null)
+		{
+			tracks = artist.Tracks
+				.Where(t => t != null)
+				.ToList()!;
+		}
+
+		loading = false;
+		StateHasChanged();
+	}
+
+	private async Task Play(Track track)
+	{
+		if (tracks == null)
+		{
+			Snackbar.Add("Artist is empty!", Severity.Error);
+			return;
+		}
+
+		await AudioService.PlayFromAsync(tracks, track, Enums.QueueSourceEnum.Artist, artistId: artist!.Id, artistName: artist!.Name);
+	}
+
+	private void DeleteTrack(int id)
+	{
+		if (tracks == null) return;
+
+		string name = tracks.FirstOrDefault(t => t.Id == id)!.Title;
+		tracks = tracks.Where(t => t.Id != id).ToList();
+
+		if (artist != null)
+		{
+			artist.Tracks = artist.Tracks.Where(t => t.Id != id).ToList();
+		}
+
+		Snackbar.Add($"{name} successfuly deleted!", Severity.Success);
+		StateHasChanged();
+	}
+
+	private async void HandleTrackDelete(Track track)
+	{
+		if (tracks == null) return;
+
+		await RefreshArtistData();
+		StateHasChanged();
+	}
+
+	private async void HandleTrackAdd(Track track)
+	{
+		await RefreshArtistData();
+		StateHasChanged();
+	}
+
+	private async Task EditAvatar(IBrowserFile file)
+	{
+		if (artist == null)
+		{
+			Snackbar.Add("Error on update artist avatar", Severity.Error);
+			return;
+		}
+
+		await ArtistService.EditArtistAvatar(file, artist);
+
+		StateHasChanged();
+		Snackbar.Add("Avatar updated!", Severity.Success);
+	}
+
+	private async void HandleArtistEdit()
+	{
+		await RefreshArtistData();
+		StateHasChanged();
+	}
+}
