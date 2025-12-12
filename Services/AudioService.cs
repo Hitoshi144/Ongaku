@@ -21,6 +21,8 @@ namespace Ongaku.Services {
         private QueueModeEnum _queueMode = QueueModeEnum.Loop;
         public string _currentPlaylistName = "";
         private int _currentPlaylistId = -1;
+        public string _currentArtistName = "";
+        private int _currentArtistId = -1;
 
         private Random _random = new Random();
         private bool _isShuffeled = false;
@@ -246,15 +248,21 @@ namespace Ongaku.Services {
             if (_queueSource == QueueSourceEnum.None 
                 || _queueSource != source 
                 || sourceTracks != _queue 
-                || (_currentPlaylistId != playlistId))
+                || (_currentPlaylistId != playlistId)
+                || (_currentArtistId != artistId))
             {
                 if (_currentPlaylistId != playlistId)
                 {
                     _currentPlaylistId = playlistId;
                     _currentPlaylistName = playlistName;
                 }
+                else if (_currentArtistId != artistId)
+                {
+                    _currentArtistId = artistId;
+                    _currentArtistName = artistName;
+                }
 
-                BuildQueue(sourceTracks, track, source);
+                    BuildQueue(sourceTracks, track, source);
             }
             else
             {

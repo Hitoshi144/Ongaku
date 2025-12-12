@@ -251,7 +251,7 @@
 			case QueueSourceEnum.Playlist:
 				return $"плейлист {AudioService._currentPlaylistName}";
 			case QueueSourceEnum.Artist:
-				return "артист ...";
+				return $"артист {AudioService._currentArtistName}";
 			case QueueSourceEnum.None:
 				return "НИЧЕГО";
 			default:
