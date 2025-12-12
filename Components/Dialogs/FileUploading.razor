@@ -32,7 +32,7 @@
                            @ondragover:preventDefault="true"
                            Accept=".mp3, .wav, .aac">
                 <ActivatorContent>
-                    <MudPaper Height="300px"
+                    <MudPaper Height="300px" Style="overflow: hidden;"
                               Outlined="true"
                               Class="@_dragClass">
                         <MudText Typo="Typo.h6">
@@ -48,6 +48,16 @@
                     </MudPaper>
                 </ActivatorContent>
             </MudFileUpload>
+
+            <div class="@(_proccessing ? "d-flex flex-row justify-space-between" : "invisible")">
+                <MudText Color="Color.Primary" Typo="Typo.h5" Style="max-width: 80%; overflow: hidden; text-wrap: nowrap;">
+                    @_currentProccessing
+                </MudText>
+                <MudText  Color="Color.Primary" Typo="Typo.h5">
+                    @_processedCount/@_files.Count
+                </MudText>
+            </div>
+            
         </MudStack>
 	</DialogContent>
 	<DialogActions>
@@ -59,7 +69,7 @@
                        Variant="Variant.Filled">
                 @if (_proccessing)
                 {
-                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate />
+                    <MudProgressCircular Color="Color.Primary" Class="ms-n1" Size="Size.Small" Value="_processedPercent" Max="100" />
                     <MudText Class="ms-2">Proccessing</MudText>
                 }
                 else
@@ -91,6 +101,8 @@
     private static readonly string[] AllowedExtensions = { ".mp3", ".wav", ".aac" };
     private bool _proccessing = false;
     private string? _currentProccessing;
+    private int _processedCount = 0;
+    private int _processedPercent = 0;
 
     private async Task ClearAsync()
     {
@@ -142,6 +154,9 @@
 
                 _currentProccessing = file.Name;
                 await TrackService.AddTrackAsync(file.Name, ms);
+                _processedCount++;
+                ConvertToPercents();
+                StateHasChanged();
             }
 
             _proccessing = false;
@@ -153,6 +168,17 @@
             Snackbar.Add($"Ошибка {_currentProccessing}: {ex.Message}", Severity.Error);
             MudDialog!.Close(DialogResult.Cancel());
         }
+    }
+
+    private void ConvertToPercents()
+    {
+        if (_files.Count == 0)
+        {
+            _processedPercent = 0;
+            return;
+        }
+
+        _processedPercent = Convert.ToInt32(Math.Round((double)_processedCount / _files.Count * 100));
     }
 
     private void SetDragClass()

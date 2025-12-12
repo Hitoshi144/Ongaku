@@ -4,6 +4,7 @@ using MudBlazor;
 using Ongaku.Data;
 using Ongaku.Enums;
 using Ongaku.Models;
+using NAudio.Wave;
 
 namespace Ongaku.Services {
     public class TrackService {
@@ -84,8 +85,45 @@ namespace Ongaku.Services {
                 await stream.CopyToAsync( fs );
             }
 
-            var filemetadata = TagLib.File.Create(filePath);
-            var performer = filemetadata.Tag.FirstPerformer;
+            string? performer = null;
+            TimeSpan duration;
+            string? coverPath = null;
+
+            try
+            {
+                var filemetadata = TagLib.File.Create(filePath);
+                performer = filemetadata.Tag.FirstPerformer;
+                duration = filemetadata.Properties.Duration;
+
+                if (filemetadata.Tag.Pictures != null && filemetadata.Tag.Pictures.Length > 0)
+                {
+                    var coversFolder = Path.Combine(_environment.WebRootPath, "covers");
+                    Directory.CreateDirectory(coversFolder);
+
+                    var picture = filemetadata.Tag.Pictures[0];
+                    var bytes = picture.Data.Data;
+                    var mime = picture.MimeType;
+
+                    var coverName = $"{Guid.NewGuid()}.jpg";
+                    var absCoverPath = Path.Combine(coversFolder, coverName);
+
+                    coverPath = $"covers/{coverName}";
+                    await File.WriteAllBytesAsync(absCoverPath, bytes);
+                }
+                else
+                {
+                    coverPath = _coverRandomerService.GetRandomCover();
+                }
+            }
+            catch
+            {
+                using (var reader = new AudioFileReader(filePath))
+                {
+                    duration = reader.TotalTime;
+                }
+
+                coverPath = _coverRandomerService.GetRandomCover();
+            }
 
             Artist? existArtist;
 
@@ -122,29 +160,6 @@ namespace Ongaku.Services {
                 }
             }
 
-            var duration = filemetadata.Properties.Duration;
-
-            string? coverPath = null;
-            if (filemetadata.Tag.Pictures != null && filemetadata.Tag.Pictures.Length > 0)
-            {
-                var coversFolder = Path.Combine(_environment.WebRootPath, "covers");
-                Directory.CreateDirectory(coversFolder);
-
-                var picture = filemetadata.Tag.Pictures[0];
-                var bytes = picture.Data.Data;
-                var mime = picture.MimeType;
-
-                var coverName = $"{Guid.NewGuid()}.jpg";
-                var absCoverPath = Path.Combine(coversFolder, coverName);
-
-                coverPath = $"covers/{coverName}";
-                await File.WriteAllBytesAsync( absCoverPath, bytes );
-            }
-            else
-            {
-                coverPath = _coverRandomerService.GetRandomCover();
-            }
-
             string dbTitle = "";
             var titleParts = title.Split('.');
 
@@ -153,7 +168,6 @@ namespace Ongaku.Services {
                 dbTitle += titleParts[i];
             }
 
-            Console.WriteLine("Создаю объект трека");
                 var track = new Track
                 {
                     Title = dbTitle,
@@ -164,13 +178,10 @@ namespace Ongaku.Services {
                     CoverPath = coverPath
                 };
 
-            Console.WriteLine("привязываю трек к артисту");
             existArtist.Tracks.Add(track);
 
 
-            Console.WriteLine("Добавляю трек");
             _context.Tracks.Add(track);
-            Console.WriteLine("Сохраняю изменения");
             await _context.SaveChangesAsync();
             OnTrackAdd?.Invoke(track);
         }
