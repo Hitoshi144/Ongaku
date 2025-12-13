@@ -117,5 +117,47 @@ namespace Ongaku.Services {
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task ChangeOrder(Playlist playlist, Track track, int newOrder)
+        {
+            using var _context = _contextFactory.CreateDbContext();
+            _context.Attach(playlist);
+
+            List<PlaylistTrack> playlistTracks = await _context.PlaylistTracks.Where(pt => pt.PlaylistId == playlist.Id).OrderBy(pt => pt.Order).ToListAsync();
+
+            if (playlistTracks == null || playlistTracks.Count == 0) return;
+
+            PlaylistTrack? changedTrack = playlistTracks.FirstOrDefault(pt => pt.TrackId == track.Id);
+
+            if (changedTrack == null) return;
+
+            int oldOrder = changedTrack.Order;
+            if (oldOrder == newOrder) return;
+
+            newOrder = Math.Max(0, Math.Min(newOrder, playlistTracks.Count - 1));
+            foreach (var playlistTrack in playlistTracks)
+            {
+                if (playlistTrack.TrackId == track.Id)
+                {
+                    playlistTrack.Order = newOrder;
+                }
+                else if (oldOrder < newOrder)
+                {
+                    if (playlistTrack.Order > oldOrder && playlistTrack.Order <= newOrder)
+                    {
+                        playlistTrack.Order--;
+                    }
+                }
+                else
+                {
+                    if (playlistTrack.Order >= newOrder && playlistTrack.Order < oldOrder)
+                    {
+                        playlistTrack.Order++;
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 }
