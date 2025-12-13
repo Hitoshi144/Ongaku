@@ -34,11 +34,14 @@ namespace Ongaku.Services {
                     .Where(t => trackIds.Contains(t.Id))
                     .ToListAsync();
 
-                var playlistTracks = existingTracks.Select(track =>
+                existingTracks.Reverse();
+
+                var playlistTracks = existingTracks.Select((track, index) =>
                     new PlaylistTrack
                     {
                         PlaylistId = playlist.Id,
-                        TrackId = track.Id
+                        TrackId = track.Id,
+                        Order = index,
                     }).ToList();
 
                 await _context.PlaylistTracks.AddRangeAsync(playlistTracks);
@@ -49,13 +52,13 @@ namespace Ongaku.Services {
         public async Task<List<Playlist>> GetAllPlaylistsAsync()
         {
             using var _context = _contextFactory.CreateDbContext();
-            return await _context.Playlists.Include(p => p.PlaylistTracks).ThenInclude(pt => pt.Track).ThenInclude(t => t!.Artist).AsQueryable().ToListAsync();
+            return await _context.Playlists.Include(p => p.PlaylistTracks.OrderBy(pt => pt.Order)).ThenInclude(pt => pt.Track).ThenInclude(t => t!.Artist).AsQueryable().ToListAsync();
         }
 
         public async Task<Playlist?> GetPlaylist(string id)
         {
             using var _context = _contextFactory.CreateDbContext();
-            return await _context.Playlists.Include(p => p.PlaylistTracks).ThenInclude(pt => pt.Track).ThenInclude(t => t!.Artist).FirstOrDefaultAsync(pt => pt.Id == Convert.ToInt32(id));
+            return await _context.Playlists.Include(p => p.PlaylistTracks.OrderBy(pt => pt.Order)).ThenInclude(pt => pt.Track).ThenInclude(t => t!.Artist).FirstOrDefaultAsync(pt => pt.Id == Convert.ToInt32(id));
         }
 
         public async Task DeletePlaylist(Playlist playlist)
@@ -91,10 +94,13 @@ namespace Ongaku.Services {
             using var _context = _contextFactory.CreateDbContext();
             _context.Attach(playlist);
 
+            int order = playlist.PlaylistTracks.Count();
+
             PlaylistTrack playlistTrack = new()
             {
                 TrackId = track.Id,
                 PlaylistId = playlist.Id,
+                Order = order
             };
             playlist.PlaylistTracks.Add(playlistTrack);
             await _context.SaveChangesAsync();
