@@ -33,7 +33,7 @@ namespace Ongaku.Services {
         public async Task<Artist?> GetArtistById(string id)
         {
             using var _context = _contextFactory.CreateDbContext();
-            return await _context.Artists.Include(a => a.Tracks).Where(a => a.Id == Convert.ToInt32(id)).FirstOrDefaultAsync();
+            return await _context.Artists.Include(a => a.Tracks.OrderBy(t => t.Title)).Where(a => a.Id == Convert.ToInt32(id)).FirstOrDefaultAsync();
         }
 
         public async Task<Artist> AddArtistAsync(string name)
@@ -69,7 +69,7 @@ namespace Ongaku.Services {
         public async Task<List<Artist>> GetAllArtists()
         {
             using var _context = _contextFactory.CreateDbContext();
-            return await _context.Artists.Include(a => a.Tracks).ToListAsync();
+            return await _context.Artists.Include(a => a.Tracks.OrderBy(t => t.Title)).ToListAsync();
         }
 
         public async Task EditArtistAvatar(IBrowserFile file, Artist artist)

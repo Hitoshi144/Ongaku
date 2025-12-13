@@ -5,5 +5,7 @@
 
         public int TrackId { get; set; }
         public Track? Track { get; set; }
+
+        public int Order { get; set; }
     }
 }
