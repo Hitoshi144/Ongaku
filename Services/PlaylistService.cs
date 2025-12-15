@@ -85,6 +85,8 @@ namespace Ongaku.Services {
                 _context.PlaylistTracks.Remove(_exists);
                 await _context.SaveChangesAsync();
 
+                await NormalizeOrderOnTrackDelete(playlist);
+
                 OnTrackDeleted?.Invoke(track, playlist.Id);
             }
         }
@@ -158,6 +160,65 @@ namespace Ongaku.Services {
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task NormalizeOrderOnTrackDelete(Playlist? playlist = null)
+        {
+            using var _context = _contextFactory.CreateDbContext();
+
+            if (playlist != null)
+            {
+                var playlistTracks = await _context.PlaylistTracks
+                    .Where(pt => pt.PlaylistId == playlist.Id)
+                    .OrderBy(pt => pt.Order)
+                    .ToListAsync();
+
+                await NormalizeOrderForPlaylist(_context, playlistTracks);
+            }
+            else
+            {
+                var playlistIds = await _context.Playlists
+                    .Select(p => p.Id)
+                    .ToListAsync();
+
+                foreach (var playlistId in playlistIds)
+                {
+                    var playlistTracks = await _context.PlaylistTracks
+                        .Where(pt => pt.PlaylistId == playlistId)
+                        .OrderBy(pt => pt.Order)
+                        .ToListAsync();
+
+                    await NormalizeOrderForPlaylist(_context, playlistTracks);
+                }
+            }
+        }
+
+        private async Task NormalizeOrderForPlaylist(DbContext context, List<PlaylistTrack> playlistTracks)
+        {
+            if (playlistTracks.Count == 0) return;
+
+            bool needsNormalization = false;
+            for (int i = 0; i < playlistTracks.Count; i++)
+            {
+                if (playlistTracks[i].Order != i)
+                {
+                    needsNormalization = true;
+                    break;
+                }
+            }
+
+            if (!needsNormalization) return;
+
+            for (int i = 0; i < playlistTracks.Count; i++)
+            {
+                if (playlistTracks[i].Order != i)
+                {
+                    playlistTracks[i].Order = i;
+                    context.Entry(playlistTracks[i]).Property(p => p.Order).IsModified = true;
+                }
+            }
+
+            await context.SaveChangesAsync();
         }
     }
 }

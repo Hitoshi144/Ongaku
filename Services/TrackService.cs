@@ -12,16 +12,18 @@ namespace Ongaku.Services {
         private readonly IWebHostEnvironment _environment;
         private readonly ArtistService _artistService;
         private readonly CoverRandomerService _coverRandomerService;
+        private readonly PlaylistService _playlistService;
 
         public Action<Track>? OnTrackDelete;
         public Action<Track>? OnTrackAdd;
 
-        public TrackService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context, ArtistService artistService, CoverRandomerService coverRandomerService)
+        public TrackService(IWebHostEnvironment env, IDbContextFactory<OngakuContext> context, ArtistService artistService, CoverRandomerService coverRandomerService, PlaylistService playlistService)
         {
             _environment = env;
             _contextFactory = context;
             _artistService = artistService;
             _coverRandomerService = coverRandomerService;
+            _playlistService = playlistService;
         }
 
         public async Task<List<Track>> GetAllTracksAsync(
@@ -223,6 +225,8 @@ namespace Ongaku.Services {
 
                 _context.Tracks.Remove(targetTrack);
                 await _context.SaveChangesAsync();
+
+                await _playlistService.NormalizeOrderOnTrackDelete();
 
                 OnTrackDelete?.Invoke(targetTrack);
             }
