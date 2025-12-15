@@ -90,7 +90,7 @@
 								<div class="d-flex flex-row align-center">
 									<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
 									<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" Playlist="@playlist" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
-									<div class="z-10" style="cursor: grab;">
+									<div class="z-10 d-flex align-center" style="cursor: grab;">
 										<MudIcon Icon="@Icons.Material.Outlined.DragHandle" Size="Size.Small" />
 									</div>
 								</div>

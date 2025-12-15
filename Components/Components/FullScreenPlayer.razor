@@ -67,7 +67,7 @@
 				<div class="d-flex flex-column queue-container">
 					<div class="d-flex flex-column queue-list-container">
 						<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
-							@foreach (Track track in _queue)
+							@* @foreach (Track track in _queue)
 							{
 								var id = $"track-{track.Id}";
 								@if (track.Id == _track.Id)
@@ -104,7 +104,61 @@
 									<div style="height: 2rem;" />
 									<MudText class="pl-1 pr-1" Style="opacity: 0.8;">Далее в очереди</MudText>
 								}
-							}
+							} *@
+							<MudDropContainer T="Track" Items="_queue" @ref="_container" ItemDropped="@((info) => UpdateOrder(info))" ItemsSelector="@((item, dropzone) => true)">
+								<ChildContent>
+									<MudDropZone T="Track" Class="mt-3 mb-3" Identifier="playlist" AllowReorder>
+										<MudList T="Track" Dense="true" Class="w-100">
+
+										</MudList>
+									</MudDropZone>
+								</ChildContent>
+								<ItemRenderer>
+									@{
+										var track = context;
+										var id = $"track-{track.Id}";
+									}
+									<MudListItem T="Track" Class="mb-1 pa-0" Style="background: none;">
+										@if (track.Id == _track.Id)
+										{
+											<MudText Class="on-current-track-info">сейчас играет <b style="color: #c59ae3;">@GetOnAQueueCurrentTrackInfo()</b></MudText>
+										}
+
+										<MudPaper Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
+												  Style="border-radius: 1rem;"
+												  Height="5rem"
+												  @onclick="() => AudioService.PlayAsync(track)">
+											<div class="hover-panel d-flex justify-center align-center">
+												<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
+											</div>
+
+											<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
+												<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
+														  Width="55" Height="55" ObjectFit="ObjectFit.Cover" />
+
+												<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
+													<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
+													<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
+												</div>
+											</div>
+
+											<div class="d-flex flex-row align-center">
+												<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
+												<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" isPlayer />
+												<div class="z-10 d-flex align-center" style="cursor: grab;">
+													<MudIcon Icon="@Icons.Material.Outlined.DragHandle" Size="Size.Small" />
+												</div>
+											</div>
+										</MudPaper>
+
+										@if (track.Id == _track.Id)
+										{
+											<div style="height: 2rem;" />
+											<MudText class="pl-1 pr-1" Style="opacity: 0.8;">Далее в очереди</MudText>
+										}
+									</MudListItem>
+								</ItemRenderer>
+							</MudDropContainer>
 						</MudStack>
 					</div>
 				</div>
@@ -140,6 +194,8 @@
 
 	private bool _shuffle = false;
 	private QueueModeEnum _queueMode = QueueModeEnum.Loop;
+
+	private MudDropContainer<Track>? _container;
 
 	protected override void OnInitialized()
 	{
@@ -258,6 +314,17 @@
 				return "неизвестно что..";
 		}
 	}
+
+	private void UpdateOrder(MudItemDropInfo<Track> dropInfo)
+	{
+		if (_queue == null || dropInfo.Item == null) return;
+
+		AudioService.ChangeQueueOrder(dropInfo.Item, dropInfo.IndexInZone);
+
+		StateHasChanged();
+	}
+
+	
 
 	private void HandleTrackDelete(Track track)
 	{

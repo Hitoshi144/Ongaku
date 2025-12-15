@@ -14,6 +14,10 @@
 	{
 		<MudMenuItem @onclick="DeleteFromPlaylist" Label="Delete from playlist" Icon="@Icons.Material.Outlined.DeleteSweep" IconColor="Color.Error" />
 	}
+	@if (isPlayer)
+	{
+		<MudMenuItem @onclick="DeleteTrack" Label="Delete from queue" Icon="@Icons.Material.Outlined.DeleteSweep" IconColor="Color.Error" />
+	}
 	<MudMenuItem @onclick="OnDeleteClicked" Label="Delete"  Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" />
 </MudMenu>
 
@@ -29,6 +33,9 @@
 
 	[Parameter]
 	public EventCallback OnEdit { get; set; }
+
+	[Parameter]
+	public bool isPlayer { get; set; } = false;
 
 	private void OnDeleteClicked()
 	{
@@ -93,5 +100,14 @@
 			await PlaylistService.DeleteTrack(playlist, track);
 			await OnDelete.InvokeAsync(track.Id);
 		}
+	}
+
+	private void DeleteTrack()
+	{
+		if (track == null) return;
+
+		AudioService.RemoveTrackFromQueue(track);
+
+		StateHasChanged();
 	}
 }

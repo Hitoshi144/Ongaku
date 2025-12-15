@@ -518,6 +518,120 @@ namespace Ongaku.Services {
             }
         }
 
+        public void ChangeQueueOrder(Track track, int newOrder)
+        {
+            if (track == null || _queue == null || _queue.Count == 0)
+                return;
+
+            var oldIndex = _queue.FindIndex(t => t.Id == track.Id);
+            if (oldIndex == -1) return;
+
+            newOrder = Math.Max(0, Math.Min(newOrder, _queue.Count - 1));
+
+            if (oldIndex == newOrder) return;
+
+            _queue.RemoveAt(oldIndex);
+
+            _queue.Insert(newOrder, track);
+
+            if (_currentTrack != null)
+            {
+                if (oldIndex < newOrder)
+                {
+                    if (_currentIndex == oldIndex)
+                    {
+                        _currentIndex = newOrder;
+                    }
+                }
+                else
+                {
+                    if (oldIndex > _currentIndex && newOrder <= _currentIndex)
+                    {
+                        _currentIndex++;
+                    }
+                    else if (_currentIndex == oldIndex)
+                    {
+                        _currentIndex = newOrder;
+                    }
+                    else if (oldIndex < _currentIndex)
+                    {
+                        _currentIndex--;
+                    }
+                }
+            }
+
+            if (_isShuffeled && _originalQueue != null && _originalQueue.Count > 0)
+            {
+                var originalIndex = _originalQueue.FindIndex(t => t.Id == track.Id);
+                if (originalIndex != -1)
+                {
+                    _originalQueue.RemoveAt(originalIndex);
+
+                    if (_currentTrack != null)
+                    {
+                        var currentOriginalIndex = _originalQueue.FindIndex(t => t.Id == _currentTrack.Id);
+                        if (currentOriginalIndex != -1)
+                        {
+                            _originalQueue.Insert(currentOriginalIndex + 1, track);
+                        }
+                        else
+                        {
+                            _originalQueue.Add(track);
+                        }
+                    }
+                    else
+                    {
+                        _originalQueue.Add(track);
+                    }
+                }
+            }
+
+            OnQueueChanged?.Invoke(_queue);
+        }
+
+        public async void RemoveTrackFromQueue(Track track)
+        {
+            if (track == null || _queue == null) return;
+
+            var index = _queue.FindIndex(t => t.Id == track.Id);
+            if (index == -1) return;
+
+            _queue.RemoveAt(index);
+
+            if (index < _currentIndex)
+            {
+                _currentIndex--;
+            }
+            else if (index == _currentIndex)
+            {
+                if (_queue.Count > 0)
+                {
+                    _currentIndex = Math.Min(_currentIndex, _queue.Count - 1);
+                    _currentTrack = _queue[_currentIndex];
+
+                    await PlayAsync(_currentTrack);
+
+                    OnTrackChanged?.Invoke(_currentTrack);
+                }
+                else
+                {
+                    _currentIndex = -1;
+                    _currentTrack = null;
+                }
+            }
+
+            if (_isShuffeled && _originalQueue != null)
+            {
+                var originalIndex = _originalQueue.FindIndex(t => t.Id == track.Id);
+                if (originalIndex != -1)
+                {
+                    _originalQueue.RemoveAt(originalIndex);
+                }
+            }
+
+            OnQueueChanged?.Invoke(_queue);
+        }
+
         public async Task ClearState()
         {
             _queue.Clear();
