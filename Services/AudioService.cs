@@ -36,6 +36,7 @@ namespace Ongaku.Services {
         public event Action<QueueModeEnum>? OnQueueModeChanged;
         public event Action<List<Track>>? OnQueueChanged;
         public event Action<bool>? OnShuffleStateChanged;
+        public event Action? OnVolumeChanged;
 
         private System.Timers.Timer? _timer;
 
@@ -183,6 +184,7 @@ namespace Ongaku.Services {
         public async Task SetVolumeAsync(double v)
         {
             await _module!.InvokeVoidAsync("setVolume", v);
+            OnVolumeChanged?.Invoke();
         }
 
         public async Task ResumeAsync()

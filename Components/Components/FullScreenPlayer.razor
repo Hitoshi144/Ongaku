@@ -11,12 +11,17 @@
 	<div class="full-screen-player-container @(_hidden ? "hidden" : "showed")">
 		<div class="d-flex flex-row pa-3 flex-shrink-0">
 			<MudSpacer />
-			<MudIconButton Size="Size.Large" @onclick="OnHideClicked" Color="Color.Primary" Icon="@Icons.Material.Outlined.ExpandCircleDown" />
+			<MudFab Class="mr-20 mt-3" StartIcon="@Icons.Material.Outlined.KeyboardArrowDown" Color="Color.Secondary" Size="Size.Large" @onclick="OnHideClicked" />
 		</div>
 
 		<div class="d-flex flex-1 flex-row align-start justify-space-around" style="max-height: 100%;">
 			<div style="display: flex; align-items: center; justify-content: center; height: 100%; padding-bottom: 84px;">
 				<div class="d-flex flex-column track-card-bg gap-3 ml-20">
+					<div class="d-flex flex-row gap-2">
+						<MudIcon Color="Color.Secondary" Icon="@Icons.Material.Outlined.VolumeUp" />
+						<MudSlider Color="Color.Secondary" T="double" Value="@value" ValueChanged="OnValueChanged" Min="0" Max="100" Step="1" />
+					</div>
+
 					<div class="d-flex relative" style="border-radius: 1rem; overflow: hidden;">
 						<MudImage Src="@_track.CoverPath" Width="450" Height="450" ObjectFit="ObjectFit.Cover"/>
 
@@ -67,44 +72,6 @@
 				<div class="d-flex flex-column queue-container">
 					<div class="d-flex flex-column queue-list-container">
 						<MudStack Class="pt-5" Row="false" Breakpoint="Breakpoint.None">
-							@* @foreach (Track track in _queue)
-							{
-								var id = $"track-{track.Id}";
-								@if (track.Id == _track.Id)
-								{
-									<MudText Class="on-current-track-info">сейчас играет <b style="color: #c59ae3;">@GetOnAQueueCurrentTrackInfo()</b></MudText>
-								}
-
-								<MudPaper id="@id" Class="track-item pa-4 d-flex flex-row justify-space-between align-center" Elevation="3" Outlined
-										  Style="border-radius: 1rem; width: 100%;"
-										  Height="5rem"
-										  @onclick="() => AudioService.PlayAsync(track)">
-									<div class="hover-panel d-flex justify-center align-center">
-										<MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Large" Color="Color.Primary" />
-									</div>
-
-									<div class="d-flex flex-row align-center gap-3" style="width: 70%;">
-										<MudImage Src="@track.CoverPath" FallbackSrc="assets/teto_cover.png" Class="z-10 rounded-lg"
-												  Width="55" Height="55" ObjectFit="ObjectFit.Cover" />
-
-										<div class="d-flex flex-column justify-center align-start" style="overflow: hidden; width: 70%;">
-											<MudText style="font-size: 1.25rem; text-wrap: nowrap; z-index: 1;">@track.Title</MudText>
-											<MudText style="font-size: 1rem; opacity: 0.7; text-wrap: nowrap; z-index: 1;">@track.Artist.Name</MudText>
-										</div>
-									</div>
-
-									<div class="d-flex flex-row align-center">
-										<MudText Class="z-10">@(track.Duration.Hours != 0 ? $"{track.Duration.Hours.ToString()}:" : "")@(track.Duration.Hours != 0 ? (track.Duration.Minutes.ToString().Length == 2 ? track.Duration.Minutes : "0" + track.Duration.Minutes) : track.Duration.Minutes):@(track.Duration.Seconds.ToString().Length == 1 ? "0" + track.Duration.Seconds : track.Duration.Seconds)</MudText>
-										<Ongaku.Components.Buttons.TrackActionsBtn Track="@track" OnDelete="DeleteTrack" OnEdit="StateHasChanged" />
-									</div>
-								</MudPaper>
-
-								@if (track.Id == _track.Id)
-								{
-									<div style="height: 2rem;" />
-									<MudText class="pl-1 pr-1" Style="opacity: 0.8;">Далее в очереди</MudText>
-								}
-							} *@
 							<MudDropContainer T="Track" Items="_queue" @ref="_container" ItemDropped="@((info) => UpdateOrder(info))" ItemsSelector="@((item, dropzone) => true)">
 								<ChildContent>
 									<MudDropZone T="Track" Class="mt-3 mb-3" Identifier="playlist" AllowReorder>
@@ -197,14 +164,20 @@
 
 	private MudDropContainer<Track>? _container;
 
-	protected override void OnInitialized()
+	private CancellationTokenSource _volumeChangedCts = new();
+	private double value = 100;
+
+	protected override async Task OnInitializedAsync()
 	{
 		_queueMode = AudioService.QueueMode;
 
 		AudioService.OnQueueModeChanged += HandleQueueModeChanged;
 		AudioService.OnShuffleStateChanged += HandleShuffleStateChanged;
+		AudioService.OnVolumeChanged += HandleVolumeChanged;
 
 		TrackService.OnTrackDelete += HandleTrackDelete;
+
+		value = await AudioService.GetVolumeAsync() * 100;
 	}
 
 	private void HandleQueueModeChanged(QueueModeEnum newMode)
@@ -217,6 +190,32 @@
 	{
 		_shuffle = newShuffleState;
 		InvokeAsync(StateHasChanged);
+	}
+
+	private async void HandleVolumeChanged()
+	{
+		_volumeChangedCts.Cancel();
+		_volumeChangedCts = new CancellationTokenSource();
+
+		var token = _volumeChangedCts.Token;
+
+		try
+		{
+			await Task.Delay(150, token);
+
+			if (token.IsCancellationRequested) return;
+
+			var volume = await AudioService.GetVolumeAsync() * 100;
+
+			if (token.IsCancellationRequested) return;
+
+			value = volume;
+			await InvokeAsync(StateHasChanged);
+		}
+		catch (TaskCanceledException)
+		{
+			
+		}
 	}
 
 	private void OnHideClicked()
@@ -324,7 +323,11 @@
 		StateHasChanged();
 	}
 
-	
+	private async Task OnValueChanged(double newValue)
+	{
+		value = newValue;
+		await AudioService.SetVolumeAsync(value / 100);
+	}
 
 	private void HandleTrackDelete(Track track)
 	{

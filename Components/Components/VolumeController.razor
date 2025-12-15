@@ -42,6 +42,7 @@
 	[Parameter]
 	public required bool _open { get; set; }
 
+	private CancellationTokenSource _volumeChangedCts = new();
 	private double value = 100;
 
 	private bool GoofyAhhVersion = false;
@@ -50,6 +51,13 @@
 	private bool _started = false;
 	private int _timeLeft = 15;
 	private System.Timers.Timer? _timer;
+
+	protected override Task OnInitializedAsync()
+	{
+		AudioService.OnVolumeChanged += HandleVolumeChanged;
+
+		return base.OnInitializedAsync();
+	}
 
 	protected override async Task OnParametersSetAsync()
 	{
@@ -134,5 +142,31 @@
 		await AudioService.SetVolumeAsync(value / 100);
 
 		await InvokeAsync(StateHasChanged);
+	}
+
+	private async void HandleVolumeChanged()
+	{
+		_volumeChangedCts.Cancel();
+		_volumeChangedCts = new CancellationTokenSource();
+
+		var token = _volumeChangedCts.Token;
+
+		try
+		{
+			await Task.Delay(150, token);
+
+			if (token.IsCancellationRequested) return;
+
+			var volume = await AudioService.GetVolumeAsync() * 100;
+
+			if (token.IsCancellationRequested) return;
+
+			value = volume;
+			await InvokeAsync(StateHasChanged);
+		}
+		catch (TaskCanceledException)
+		{
+
+		}
 	}
 }
