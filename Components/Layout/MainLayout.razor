@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject Ongaku.Services.AudioService AudioService
 @inject Ongaku.Services.ViewportService ViewportService
+@inject NavigationManager Navigation
 @using MudBlazor.Services
 @using MudBlazor
 
@@ -10,8 +11,11 @@
 <MudSnackbarProvider />
 <MudLayout>
     <MudAppBar Elevation="1" Fixed="true" Dense="true">
-        <MudImage Src="assets/azusa.png" Height="48" ObjectFit="ObjectFit.Contain" />
-        <MudPaper Style="display: flex; height: 100%; align-items: flex-end;">
+        <MudImage Src="assets/azusa.png" Height="48" ObjectFit="ObjectFit.Contain"
+        @onclick="GoToHome"
+        Style="cursor: pointer;"
+        />
+        <MudPaper Style="display: flex; height: 100%; align-items: flex-end; cursor: default;">
             <MudText Typo="Typo.h4" Class="ml-3" Style="font-family: 'Dotted';">Ongaku</MudText>
         </MudPaper>
         <MudSpacer />
@@ -140,6 +144,11 @@
     private void ToogleVolume()
     {
         _volumeOpen = !_volumeOpen;
+    }
+
+    private void GoToHome()
+    {
+        Navigation.NavigateTo("/");
     }
 }
 
